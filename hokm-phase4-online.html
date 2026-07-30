@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>حکم — فاز ۴</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt-1:#8a2c22;
+    --felt-2:#5c1a15;
+    --felt-edge:#3a100d;
+    --gold:#cda449;
+    --gold-bright:#f2d488;
+    --cream:#f6efdc;
+    --ink:#221a10;
+    --teamA:#e0b559;
+    --teamB:#8fb9c9;
+    --maroon:#9a332c;
+    --navy:#22405f;
+    --panel:#1c110d;
+    --panel-2:#241712;
+    --table-border:#7a5a26;
+    --table-outline:var(--gold);
+    --back-grad-1:#2c5a44;
+    --back-grad-2:#0f2f24;
+    --back-border:var(--gold);
+  }
+  *{box-sizing:border-box;}
+
+  /* ---- card skins ---- */
+  #app[data-skin="royal"]{--card-bg:#f3e8d8;--card-border:#cda449;--card-ink:#22204a;--card-red:#7a1220;--back-grad-1:#4a1942;--back-grad-2:#22091f;--back-border:#e8c876;}
+  #app[data-skin="neon"]{--card-bg:#12121c;--card-border:#37e6d6;--card-ink:#37e6d6;--card-red:#ff3d8a;--back-grad-1:#0d0d16;--back-grad-2:#000;--back-border:#ff3d8a;}
+  #app[data-skin="neon"] .pcard{box-shadow:0 0 10px rgba(55,230,214,.55),0 3px 6px rgba(0,0,0,.5);}
+  #app[data-skin="neon"] .card-back{box-shadow:0 0 10px rgba(255,61,138,.55);}
+  #app[data-skin="wood"]{--card-bg:#e8d3a5;--card-border:#6b4423;--card-ink:#4a2f18;--card-red:#8a3b24;--back-grad-1:#6b4423;--back-grad-2:#33200f;--back-border:#c99a55;}
+  #app[data-skin="gold"]{--card-bg:#fff3d0;--card-border:#a5822a;--card-ink:#1c1a12;--card-red:#8a1b1b;--back-grad-1:#d4af37;--back-grad-2:#7a5c14;--back-border:#fff3d0;}
+  #app[data-skin="gold"] .pcard{box-shadow:0 0 8px rgba(242,212,136,.5),0 3px 6px rgba(0,0,0,.4);}
+  #app[data-skin="black"]{--card-bg:#181818;--card-border:#4a4a4a;--card-ink:#f1e9d8;--card-red:#e0524a;--back-grad-1:#2a2a2a;--back-grad-2:#080808;--back-border:#9a9a9a;}
+  #app[data-skin="iranian"]{--card-bg:#f3ecd6;--card-border:#1f6f78;--card-ink:#6b1420;--card-red:#1f6f78;--back-grad-1:#1f6f78;--back-grad-2:#5c1a15;--back-border:#cda449;}
+
+  /* ---- table felts ---- */
+  #app[data-table="cafe"]{--felt-1:#6b4023;--felt-2:#3a2414;--felt-edge:#20140c;--table-border:#8a6a3a;}
+  #app[data-table="wood"]{--felt-1:#1f4a35;--felt-2:#0d2419;--felt-edge:#081712;--table-border:#a67c3d;}
+  #app[data-table="stone"]{--felt-1:#54545a;--felt-2:#2c2c30;--felt-edge:#17171a;--table-border:#8a8a90;}
+  #app[data-table="marble"]{--felt-1:#d8d3c8;--felt-2:#a8a196;--felt-edge:#6e675c;--table-border:#b8ab8a;}
+  #app[data-table="luxury"]{--felt-1:#1c1410;--felt-2:#0a0705;--felt-edge:#000;--table-border:#f2d488;--table-outline:#f2d488;}
+  #app[data-table="luxury"] .felt{box-shadow:0 20px 60px rgba(0,0,0,.65), inset 0 0 120px rgba(0,0,0,.6), 0 0 40px rgba(242,212,136,.25);}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Vazirmatn',sans-serif;
+    background:
+      radial-gradient(ellipse at 50% 0%, #2c1712 0%, #170d0a 55%, #0c0605 100%);
+    color:var(--cream);
+    min-height:100vh;
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+    transition:background .5s ease;
+  }
+  body[data-bg="dragon"]{background:radial-gradient(ellipse at 50% 0%, #123524 0%, #0a1f16 55%, #05100b 100%);}
+  body[data-bg="lion"]{background:radial-gradient(ellipse at 50% 0%, #3a2a12 0%, #211505 55%, #120b03 100%);}
+  body[data-bg="galaxy"]{
+    background:
+      radial-gradient(circle at 18% 26%, rgba(255,255,255,.7) 1px, transparent 1.6px),
+      radial-gradient(circle at 62% 12%, rgba(255,255,255,.5) 1px, transparent 1.6px),
+      radial-gradient(circle at 82% 46%, rgba(255,255,255,.6) 1px, transparent 1.6px),
+      radial-gradient(circle at 34% 70%, rgba(255,255,255,.5) 1px, transparent 1.6px),
+      radial-gradient(ellipse at 50% 0%, #1b1240 0%, #0d0930 55%, #05041a 100%);
+    background-size:120px 120px, 160px 160px, 140px 140px, 150px 150px, auto;
+  }
+  body[data-bg="shahanshahi"]{background:radial-gradient(ellipse at 50% 0%, #2a1442 0%, #180a28 55%, #0d0616 100%);}
+
+  .avatar{
+    width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:16px;background:rgba(0,0,0,.3);border:2px solid var(--gold);flex-shrink:0;
+  }
+  .avatar.frame-dragon{border-color:#2f8f5c;box-shadow:0 0 8px rgba(47,143,92,.65);}
+  .avatar.frame-lion{border-color:#c98a2e;box-shadow:0 0 8px rgba(201,138,46,.65);}
+  .avatar.frame-shahanshahi{border-color:#b072e0;box-shadow:0 0 8px rgba(176,114,224,.65);}
+  .avatar.frame-galaxy{border-color:#6f7bf0;box-shadow:0 0 10px rgba(111,123,240,.75);}
+  #app{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:10px 8px 18px;}
+
+  /* header */
+  .topbar{width:100%;max-width:920px;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;}
+  .brand{display:flex;flex-direction:column;line-height:1;}
+  .brand b{font-size:20px;letter-spacing:1px;color:var(--gold-bright);font-weight:800;}
+  .brand span{font-size:10px;color:#9db8ab;margin-top:3px;}
+  .score-pill{display:flex;gap:6px;background:var(--panel);border:1px solid #1f4536;border-radius:999px;padding:6px 12px;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.4) inset;}
+  .score-pill .a{color:var(--teamA);font-weight:700;}
+  .score-pill .b{color:var(--teamB);font-weight:700;}
+  .score-pill .sep{color:#5a7266;}
+  .topbar-actions{display:flex;align-items:center;gap:8px;}
+  .icon-btn{
+    width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--panel);border:1px solid #2a4f3f;color:var(--gold-bright);font-size:16px;cursor:pointer;
+  }
+  .icon-btn:hover{border-color:var(--gold);}
+
+  /* settings panel */
+  .settings-box{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid #2a4f3f;border-radius:16px;padding:20px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  .settings-box h2{margin:0 0 14px;color:var(--gold-bright);font-size:20px;text-align:center;}
+  .settings-section{margin-bottom:16px;}
+  .settings-section h3{margin:0 0 8px;font-size:13px;color:#9db8ab;font-weight:600;}
+  .swatch-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .swatch{
+    border-radius:10px;border:2px solid transparent;padding:8px 4px 6px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(0,0,0,.2);
+  }
+  .swatch.active{border-color:var(--gold-bright);box-shadow:0 0 10px rgba(242,212,136,.4);}
+  .swatch .chip{width:100%;height:34px;border-radius:6px;}
+  .swatch .lbl{font-size:10.5px;color:#e6dcc4;text-align:center;line-height:1.3;}
+  .settings-close{width:100%;margin-top:6px;}
+  .profile-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .profile-row input{
+    flex:1;background:rgba(0,0,0,.25);border:1px solid #2a4f3f;border-radius:8px;
+    padding:9px 12px;color:var(--cream);font-family:inherit;font-size:13px;
+  }
+  .profile-row input:focus{outline:none;border-color:var(--gold);}
+  .swatch-grid.small{grid-template-columns:repeat(6,1fr);}
+  .swatch-grid.small .chip{height:26px;font-size:16px;display:flex;align-items:center;justify-content:center;}
+  .settings-tabs{display:flex;gap:6px;margin-bottom:14px;}
+  .settings-tab{flex:1;text-align:center;padding:8px 4px;border-radius:8px;background:var(--panel);border:1px solid #2a4f3f;font-size:12px;cursor:pointer;color:#cfd9d2;}
+  .settings-tab.active{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#2a1e0a;font-weight:700;border-color:transparent;}
+
+  /* table */
+  .table-wrap{position:relative;width:100%;max-width:920px;aspect-ratio:16/10.5;margin-top:6px;}
+  .felt{
+    position:absolute;inset:0;
+    border-radius:50%/45%;
+    background:
+      radial-gradient(ellipse at 50% 38%, var(--felt-1) 0%, var(--felt-2) 60%, var(--felt-edge) 100%);
+    border:10px solid var(--table-border);
+    outline:2px solid var(--table-outline);
+    outline-offset:-8px;
+    transition:background .4s ease, border-color .4s ease;
+    box-shadow:0 20px 50px rgba(0,0,0,.55), inset 0 0 100px rgba(0,0,0,.55);
+  }
+  .felt::before{
+    content:'';position:absolute;inset:16px;border-radius:inherit;
+    background-image:
+      repeating-linear-gradient(45deg, transparent 0 26px, rgba(205,164,73,.35) 26px 28px, transparent 28px 52px),
+      repeating-linear-gradient(-45deg, transparent 0 26px, rgba(205,164,73,.35) 26px 28px, transparent 28px 52px),
+      radial-gradient(circle, rgba(232,215,176,.5) 1.4px, transparent 1.6px);
+    background-size:auto, auto, 52px 52px;
+    background-position:0 0, 0 0, 13px 13px;
+  }
+  .felt::after{
+    content:'';position:absolute;inset:16px;border-radius:inherit;
+    border:1.5px solid rgba(232,215,176,.4);
+    box-shadow:inset 0 0 0 6px rgba(58,16,13,.0), inset 0 0 0 9px rgba(205,164,73,.25);
+  }
+  .rug-medallion{
+    position:absolute;top:50%;left:50%;width:36%;aspect-ratio:1;
+    transform:translate(-50%,-50%);border-radius:50%;
+    background:
+      repeating-conic-gradient(from 0deg, rgba(205,164,73,.32) 0deg 4deg, transparent 4deg 30deg),
+      radial-gradient(circle, rgba(232,215,176,.18), transparent 72%);
+    opacity:.55;pointer-events:none;z-index:1;
+  }
+
+  .seat{position:absolute;display:flex;flex-direction:column;align-items:center;gap:4px;z-index:3;}
+  .seat.north{top:2%;left:50%;transform:translateX(-50%);}
+  .seat.south{bottom:1%;left:50%;transform:translateX(-50%);}
+  .seat.west{left:1%;top:50%;transform:translateY(-50%);}
+  .seat.east{right:1%;top:50%;transform:translateY(-50%);}
+
+  .name-tag{
+    font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;
+    background:rgba(10,20,16,.75);border:1px solid #2a4f3f;color:#e6dcc4;
+    display:flex;align-items:center;gap:6px;white-space:nowrap;
+  }
+  .name-tag .dot{width:7px;height:7px;border-radius:50%;background:var(--teamA);}
+  .seat.west .name-tag .dot, .seat.east .name-tag .dot{background:var(--teamB);}
+  .name-tag.active{box-shadow:0 0 0 2px var(--gold-bright), 0 0 14px var(--gold-bright);color:#fff;}
+  .name-tag .hakem-mark{color:var(--gold-bright);font-size:11px;}
+
+  .back-fan{display:flex;}
+  .back-fan.horiz{}
+  .card-back{
+    width:30px;height:44px;border-radius:5px;
+    background:
+      linear-gradient(135deg,var(--back-grad-1,#2c5a44),var(--back-grad-2,#0f2f24));
+    border:1.5px solid var(--back-border,var(--gold));
+    box-shadow:0 2px 5px rgba(0,0,0,.5);
+    margin-inline-start:-18px;
+    position:relative;
+  }
+  .card-back::after{content:'';position:absolute;inset:4px;border:1px solid rgba(205,164,73,.55);border-radius:3px;}
+  .back-fan .card-back:first-child{margin-inline-start:0;}
+  .seat.west .back-fan, .seat.east .back-fan{flex-direction:column;}
+  .seat.west .card-back, .seat.east .card-back{margin-inline-start:0;margin-top:-30px;}
+  .seat.west .card-back:first-child, .seat.east .card-back:first-child{margin-top:0;}
+
+  /* trump medallion */
+  .medallion{
+    position:absolute;top:2%;left:50%;transform:translate(-50%,68px);
+    width:56px;height:56px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #f5d98a, #cda449 60%, #7a5a26 100%);
+    border:2px solid #4a3616;
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;box-shadow:0 4px 14px rgba(0,0,0,.5);
+    z-index:4;
+  }
+  .medallion.empty{font-size:20px;color:#4a3616;}
+  .medallion .suit-red{color:var(--maroon);}
+  .medallion .suit-black{color:#221a10;}
+
+  /* trick area */
+  .trick-area{position:absolute;inset:0;pointer-events:none;}
+  .trick-card{
+    position:absolute;top:50%;left:50%;
+    width:52px;height:76px;
+    transition:all .35s ease;
+  }
+  .trick-card.p-south{transform:translate(-50%,-10%);}
+  .trick-card.p-north{transform:translate(-50%,-90%);}
+  .trick-card.p-west{transform:translate(-140%,-50%);}
+  .trick-card.p-east{transform:translate(40%,-50%);}
+  .trick-card.winner{filter:drop-shadow(0 0 10px var(--gold-bright));transform:translate(-50%,-50%) scale(1.15) !important;z-index:5;}
+
+  /* playing card */
+  .pcard{
+    width:52px;height:76px;border-radius:6px;background:var(--card-bg,var(--cream));
+    border:1px solid var(--card-border,#b9a97a);
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:3px 5px;font-weight:700;box-shadow:0 3px 6px rgba(0,0,0,.4);
+    color:var(--card-ink,var(--ink));
+    direction:ltr;
+  }
+  .pcard .r{font-size:14px;line-height:1;text-align:left;}
+  .pcard .r:last-child{align-self:flex-end;}
+  .pcard .s{font-size:16px;align-self:center;}
+  .pcard.red{color:var(--card-red,var(--maroon));}
+
+  /* south hand */
+  .hand{
+    position:relative;display:flex;justify-content:center;
+    height:96px;margin-top:8px;width:100%;
+  }
+  .hand .pcard{
+    position:absolute;bottom:0;cursor:pointer;
+    transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(0);
+    transition:transform .18s ease, box-shadow .18s ease;
+    width:54px;height:78px;
+    touch-action:none;
+  }
+  .hand .pcard:hover:not(.disabled):not(.dragging):not(.selected){
+    transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(-14px);
+    box-shadow:0 8px 14px rgba(0,0,0,.5);
+  }
+  .hand .pcard.selected{
+    transform: translateX(var(--tx,0px)) rotate(0deg) translateY(-30px) scale(1.06);
+    box-shadow:0 0 0 2px var(--gold-bright), 0 12px 22px rgba(0,0,0,.55);
+    z-index:80 !important;
+  }
+  .hand .pcard.dragging{transition:none;z-index:200 !important;}
+  .hand .pcard.disabled{opacity:.45;cursor:not-allowed;}
+
+  /* overlays */
+  .overlay{
+    position:fixed;inset:0;background:rgba(4,8,6,.72);
+    display:flex;align-items:center;justify-content:center;z-index:20;padding:16px;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  }
+
+  @keyframes shakeCard{
+    0%,100%{transform:translateX(var(--tx,0px)) rotate(var(--rot,0deg));}
+    20%{transform:translateX(calc(var(--tx,0px) - 6px)) rotate(var(--rot,0deg));}
+    40%{transform:translateX(calc(var(--tx,0px) + 6px)) rotate(var(--rot,0deg));}
+    60%{transform:translateX(calc(var(--tx,0px) - 4px)) rotate(var(--rot,0deg));}
+    80%{transform:translateX(calc(var(--tx,0px) + 4px)) rotate(var(--rot,0deg));}
+  }
+  .hand .pcard.shake{animation:shakeCard .38s ease;}
+
+  .particle-layer{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:visible;}
+  .particle{
+    position:absolute;top:50%;left:50%;width:6px;height:6px;border-radius:50%;
+    background:var(--gold-bright);
+    animation:particleFly .7s ease-out forwards;
+  }
+  @keyframes particleFly{
+    0%{opacity:1;transform:translate(-50%,-50%) translate(0,0) scale(1);}
+    100%{opacity:0;transform:translate(-50%,-50%) translate(var(--px),var(--py)) scale(.3);}
+  }
+  .card-box{
+    background:linear-gradient(160deg,var(--panel-2),var(--panel));
+    border:1px solid #2a4f3f;border-radius:16px;padding:26px 22px;max-width:420px;width:100%;
+    text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6);
+  }
+  .card-box h2{margin:0 0 8px;color:var(--gold-bright);font-size:22px;}
+  .card-box p{margin:0 0 18px;color:#cfd9d2;font-size:14px;line-height:1.9;}
+  .btn{
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold));
+    color:#2a1e0a;border:none;border-radius:10px;padding:11px 22px;
+    font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;
+    box-shadow:0 4px 10px rgba(0,0,0,.3);
+  }
+  .btn:hover{filter:brightness(1.06);}
+  .suit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .suit-btn{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    background:var(--panel);border:1px solid #2a4f3f;border-radius:12px;padding:12px 8px;
+    cursor:pointer;color:var(--cream);font-weight:600;font-size:13px;
+  }
+  .suit-btn:hover{border-color:var(--gold);}
+  .suit-btn .sym{font-size:24px;}
+  .my5{display:flex;gap:6px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;}
+
+  .toast{
+    position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+    background:rgba(10,20,16,.92);border:1px solid var(--gold);color:var(--cream);
+    padding:9px 18px;border-radius:999px;font-size:13px;z-index:30;
+    box-shadow:0 6px 16px rgba(0,0,0,.5);
+  }
+  .footnote{max-width:920px;width:100%;text-align:center;color:#5f7a6d;font-size:11px;margin-top:14px;line-height:1.8;}
+
+  /* ---- phase 4: auth / lobby / matchmaking screens ---- */
+  .screen-wrap{width:100%;max-width:420px;margin:8vh auto 0;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 10px;}
+  .screen-logo{font-size:34px;font-weight:800;color:var(--gold-bright);letter-spacing:1px;margin-bottom:4px;}
+  .screen-sub{font-size:12px;color:#9db8ab;margin-bottom:26px;}
+  .auth-card{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid #2a4f3f;border-radius:16px;padding:26px 22px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  .auth-btn{
+    width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--panel-2);border:1px solid #2a4f3f;border-radius:10px;padding:12px;
+    color:var(--cream);font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;margin-bottom:10px;
+  }
+  .auth-btn:hover{border-color:var(--gold);}
+  .auth-btn.primary{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#2a1e0a;border:none;}
+  .auth-divider{display:flex;align-items:center;gap:10px;color:#5a7266;font-size:11px;margin:14px 0;}
+  .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#2a4f3f;}
+
+  .lobby-profile{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid #2a4f3f;border-radius:14px;padding:14px 16px;width:100%;margin-bottom:18px;}
+  .lobby-profile .avatar{width:44px;height:44px;font-size:22px;}
+  .lobby-profile .info{text-align:right;flex:1;}
+  .lobby-profile .info b{display:block;font-size:15px;color:var(--gold-bright);}
+  .lobby-profile .info span{font-size:11px;color:#9db8ab;}
+  .lobby-actions{display:flex;flex-direction:column;gap:10px;width:100%;}
+  .lobby-btn{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--panel);border:1px solid #2a4f3f;border-radius:12px;padding:14px 16px;
+    cursor:pointer;color:var(--cream);text-align:right;
+  }
+  .lobby-btn:hover{border-color:var(--gold);}
+  .lobby-btn .t{font-weight:700;font-size:14px;}
+  .lobby-btn .d{font-size:11px;color:#9db8ab;margin-top:2px;}
+  .lobby-btn.primary{background:linear-gradient(160deg,#1f4536,#173327);border-color:var(--gold);}
+  .lobby-note{font-size:10.5px;color:#5f7a6d;margin-top:16px;line-height:1.8;}
+  .join-row{display:flex;gap:8px;width:100%;margin-bottom:10px;}
+  .join-row input{
+    flex:1;background:rgba(0,0,0,.25);border:1px solid #2a4f3f;border-radius:8px;
+    padding:11px 12px;color:var(--cream);font-family:inherit;font-size:15px;letter-spacing:3px;text-align:center;
+  }
+  .join-row input:focus{outline:none;border-color:var(--gold);}
+
+  .mm-spinner{width:70px;height:70px;border-radius:50%;border:4px solid #2a4f3f;border-top-color:var(--gold-bright);animation:spin 1s linear infinite;margin-bottom:22px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .mm-stat{display:flex;gap:18px;justify-content:center;margin-top:16px;font-size:12px;color:#9db8ab;}
+  .mm-stat b{color:var(--gold-bright);}
+  .room-code-box{background:var(--panel);border:2px dashed var(--gold);border-radius:14px;padding:18px;margin:18px 0;}
+  .room-code-box .code{font-size:32px;font-weight:800;letter-spacing:8px;color:var(--gold-bright);}
+  .room-slot{display:flex;align-items:center;gap:8px;justify-content:center;padding:8px;font-size:13px;color:#cfd9d2;}
+  .room-slot .avatar{width:26px;height:26px;font-size:14px;}
+  .room-slot.empty{color:#5f7a6d;}
+
+  .topbar-badges{display:flex;gap:6px;align-items:center;}
+  .ping-badge{
+    display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid #2a4f3f;
+    border-radius:999px;padding:5px 10px;font-size:11px;color:#9db8ab;
+  }
+  .ping-badge .dot2{width:6px;height:6px;border-radius:50%;background:#4caf6d;}
+  .ping-badge.bad .dot2{background:#e0524a;}
+
+  .reconnect-banner{
+    position:fixed;top:0;left:0;right:0;z-index:50;background:#7a1e1e;color:#fff;
+    text-align:center;padding:10px;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.4);
+  }
+
+  @media (max-width:640px){
+    .table-wrap{aspect-ratio:5/8;}
+    .seat.north{top:6%;}
+    .seat.south{bottom:8%;}
+    .medallion{transform:translate(-50%,52px);width:48px;height:48px;font-size:21px;}
+    .card-back{width:24px;height:36px;}
+    .seat.west .card-back, .seat.east .card-back{margin-top:-24px;}
+    .pcard, .trick-card{width:42px;height:60px;}
+    .hand{height:78px;}
+    .hand .pcard{width:44px;height:64px;}
+    .trick-card.p-west{transform:translate(-120%,-50%);}
+    .trick-card.p-east{transform:translate(30%,-50%);}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ---------- data ---------- */
+const SUITS = {
+  S:{symbol:'♠', name:'پیک', color:'black'},
+  H:{symbol:'♥', name:'دل', color:'red'},
+  D:{symbol:'♦', name:'خشت', color:'red'},
+  C:{symbol:'♣', name:'گشنیز', color:'black'},
+};
+const SUIT_ORDER = ['S','H','D','C'];
+const RANK_LABEL = {11:'J',12:'Q',13:'K',14:'A'};
+function rankLabel(r){ return RANK_LABEL[r] || String(r); }
+
+/* ---------- state ---------- */
+let state = {
+  screen:'login',           // login | lobby | matchmaking | room-wait | game
+  phase:null,                // choosing-trump | playing | hand-end | match-end
+  mySeat:null, hakem:null, trump:null, turn:null,
+  hand:[], handCounts:{}, seatNames:{},
+  currentTrick:[], trickWinnerSeat:null,
+  tricksWon:{A:0,B:0}, roundsWon:{A:0,B:0},
+  handWinnerTeam:null, matchWinnerTeam:null,
+  partnerConnected:true,
+  toast:null, selectedIndex:null, shakeIndex:null,
+  skin:'classic', table:'persian-rug', showSettings:false, settingsTab:'profile',
+  profile:{name:'', avatar:'😎', frame:'none', background:'default'},
+  roomCode:null, roomFriendJoined:false, mmSeconds:0, ping:'—', reconnecting:false, rank:'نقره‌ای ۲',
+};
+const AVATARS = ['😎','🦁','🐉','🦅','🃏','👑','🐺','⚔️','🌙','🔥','🎯','💎'];
+const FRAMES = [
+  {id:'none', label:'ساده'},
+  {id:'dragon', label:'اژدها'},
+  {id:'lion', label:'شیر'},
+  {id:'shahanshahi', label:'شاهنشاهی'},
+  {id:'galaxy', label:'کهکشانی'},
+];
+const BACKGROUNDS = [
+  {id:'default', label:'پیش‌فرض', c:'#2c1712'},
+  {id:'dragon', label:'اژدها', c:'#123524'},
+  {id:'lion', label:'شیر', c:'#3a2a12'},
+  {id:'galaxy', label:'کهکشانی', c:'#1b1240'},
+  {id:'shahanshahi', label:'شاهنشاهی', c:'#2a1442'},
+];
+const SKINS = [
+  {id:'classic', label:'کلاسیک', c1:'#f6efdc', c2:'#b9a97a'},
+  {id:'royal', label:'سلطنتی', c1:'#4a1942', c2:'#e8c876'},
+  {id:'neon', label:'نئون', c1:'#12121c', c2:'#37e6d6'},
+  {id:'wood', label:'چوبی', c1:'#e8d3a5', c2:'#6b4423'},
+  {id:'gold', label:'طلایی', c1:'#fff3d0', c2:'#d4af37'},
+  {id:'black', label:'مشکی', c1:'#181818', c2:'#9a9a9a'},
+  {id:'iranian', label:'ایرانی', c1:'#f3ecd6', c2:'#1f6f78'},
+];
+const TABLES = [
+  {id:'cafe', label:'کافه', c1:'#6b4023', c2:'#3a2414'},
+  {id:'wood', label:'چوب', c1:'#1f4a35', c2:'#0d2419'},
+  {id:'stone', label:'سنگ', c1:'#54545a', c2:'#2c2c30'},
+  {id:'marble', label:'مرمر', c1:'#d8d3c8', c2:'#a8a196'},
+  {id:'persian-rug', label:'فرش ایرانی', c1:'#8a2c22', c2:'#5c1a15'},
+  {id:'luxury', label:'لوکس', c1:'#1c1410', c2:'#f2d488'},
+];
+let toastTimer=null;
+function showToast(msg){
+  state.toast = msg;
+  render();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ state.toast=null; render(); }, 1900);
+}
+
+/* ---------- phase 4: real networking ---------- */
+// Server address: same host the page was served from, port 8000 — or localhost
+// when the file is opened directly (file://). Change SERVER_URL if your
+// server.py runs somewhere else.
+const SERVER_URL = (function(){
+  if(location.protocol==='http:' || location.protocol==='https:'){
+    const proto = location.protocol==='https:' ? 'wss' : 'ws';
+    return `${proto}://${location.hostname}:8000/ws`;
+  }
+  return 'ws://localhost:8000/ws';
+})();
+
+let ws = null;
+let sessionToken = null;
+let intentionalClose = false;
+let reconnectAttempts = 0;
+let reconnectTimer = null;
+let pingTimer = null;
+
+function connect(firstMessage){
+  try{ if(ws) ws.close(); }catch(e){}
+  intentionalClose = false;
+  ws = new WebSocket(SERVER_URL);
+  ws.onopen = ()=>{
+    reconnectAttempts = 0;
+    clearTimeout(reconnectTimer);
+    if(firstMessage) ws.send(JSON.stringify(firstMessage));
+    startPing();
+  };
+  ws.onmessage = (ev)=>{
+    let msg;
+    try{ msg = JSON.parse(ev.data); }catch(e){ return; }
+    handleServerMessage(msg);
+  };
+  ws.onclose = ()=>{
+    stopPing();
+    if(!intentionalClose) handleDrop();
+  };
+  ws.onerror = ()=>{ try{ ws.close(); }catch(e){} };
+}
+
+function sendMsg(obj){
+  if(ws && ws.readyState===WebSocket.OPEN){
+    ws.send(JSON.stringify(obj));
+  } else {
+    showToast('اتصال به سرور برقرار نیست...');
+  }
+}
+
+function handleDrop(){
+  if(!sessionToken){
+    state.screen = 'login';
+    render();
+    return;
+  }
+  state.reconnecting = true;
+  render();
+  if(reconnectAttempts >= 10){
+    showToast('اتصال مجدد ناموفق بود. دوباره وارد شو.');
+    sessionToken = null;
+    state.screen = 'login';
+    state.reconnecting = false;
+    render();
+    return;
+  }
+  reconnectAttempts++;
+  const delay = Math.min(1000*reconnectAttempts, 5000);
+  clearTimeout(reconnectTimer);
+  reconnectTimer = setTimeout(()=>{
+    connect({type:'reconnect', session_token: sessionToken});
+  }, delay);
+}
+
+function startPing(){
+  stopPing();
+  pingTimer = setInterval(()=>{
+    if(ws && ws.readyState===WebSocket.OPEN){
+      ws.send(JSON.stringify({type:'ping', ts: Date.now()}));
+    }
+  }, 3000);
+}
+function stopPing(){ clearInterval(pingTimer); }
+
+function handleServerMessage(msg){
+  switch(msg.type){
+    case 'login_ok':
+      sessionToken = msg.session_token;
+      state.reconnecting = false;
+      if(msg.name) state.profile.name = msg.name;
+      if(msg.rank) state.rank = msg.rank;
+      break;
+    case 'screen':
+      clearInterval(state.mmTimer);
+      state.screen = msg.name;
+      break;
+    case 'room_wait':
+      state.screen = 'room-wait';
+      state.roomCode = msg.code;
+      state.roomFriendJoined = !!msg.friendJoined;
+      break;
+    case 'game_state':
+      applyGameState(msg);
+      break;
+    case 'toast':
+      showToast(msg.message);
+      break;
+    case 'error':
+      showToast(msg.message);
+      if(msg.message && msg.message.indexOf('نشست پیدا نشد') !== -1){
+        sessionToken = null;
+        clearTimeout(reconnectTimer);
+        state.screen = 'login';
+        state.reconnecting = false;
+      }
+      break;
+    case 'pong':
+      state.ping = Math.max(1, Date.now() - msg.ts) + 'ms';
+      break;
+  }
+  render();
+}
+
+function applyGameState(msg){
+  const hadWinner = !!state.trickWinnerSeat;
+  clearInterval(state.mmTimer);
+  state.screen = 'game';
+  state.reconnecting = false;
+  state.mySeat = msg.mySeat;
+  state.phase = msg.phase;
+  state.hakem = msg.hakem;
+  state.trump = msg.trump;
+  state.turn = msg.turn;
+  state.hand = msg.hand || [];
+  state.handCounts = msg.handCounts || {};
+  state.currentTrick = msg.currentTrick || [];
+  state.trickWinnerSeat = msg.trickWinnerSeat || null;
+  state.tricksWon = msg.tricksWon || {A:0,B:0};
+  state.roundsWon = msg.roundsWon || {A:0,B:0};
+  state.handWinnerTeam = msg.handWinnerTeam || null;
+  state.matchWinnerTeam = msg.matchWinnerTeam || null;
+  state.seatNames = msg.seatNames || {};
+  state.partnerConnected = msg.partnerConnected !== false;
+  state.selectedIndex = null;
+  if(!hadWinner && state.trickWinnerSeat){
+    setTimeout(spawnParticles, 0);
+  }
+}
+
+function loginGoogle(){
+  const name = state.profile.name.trim() || 'کاربر گوگل';
+  showToast('ورود واقعی با گوگل توی فاز بعد اضافه میشه — فعلاً به‌عنوان مهمان وارد شدی');
+  state.profile.name = name;
+  connect({type:'login', name});
+}
+function loginGuest(){
+  const name = state.profile.name.trim() || ('مهمان'+Math.floor(1000+Math.random()*9000));
+  state.profile.name = name;
+  connect({type:'login', name});
+}
+function quickMatch(){
+  state.screen = 'matchmaking'; state.mmSeconds = 0; render();
+  clearInterval(state.mmTimer);
+  state.mmTimer = setInterval(()=>{ state.mmSeconds++; render(); }, 1000);
+  sendMsg({type:'quick_match'});
+}
+function cancelMatchmaking(){
+  clearInterval(state.mmTimer);
+  sendMsg({type:'cancel_matchmaking'});
+  state.screen = 'lobby'; render();
+}
+function createRoom(){
+  sendMsg({type:'create_room'});
+}
+function joinRoom(code){
+  if(!code || code.trim().length<3){ showToast('کد اتاق نامعتبره'); return; }
+  sendMsg({type:'join_room', code: code.trim().toUpperCase()});
+}
+function leaveRoom(){
+  sendMsg({type:'leave_room'});
+  state.screen = 'lobby'; render();
+}
+function simulateDisconnect(){
+  if(!ws) return;
+  state.showSettings = false; render();
+  showToast('در حال قطع عمدی اتصال برای تست reconnect...');
+  ws.close(); // real close -> triggers the same auto-reconnect flow as a real drop
+}
+
+/* ---------- gameplay actions (server-authoritative) ---------- */
+function sendChooseTrump(suit){
+  sendMsg({type:'choose_trump', suit});
+}
+function sendPlayCard(card){
+  sendMsg({type:'play_card', card:{suit:card.suit, rank:card.rank}});
+}
+function sendNextHand(){
+  sendMsg({type:'next_hand'});
+}
+function sendNewMatch(){
+  sendMsg({type:'new_match'});
+}
+
+function spawnParticles(){
+  const layer = document.querySelector('.particle-layer');
+  if(!layer) return;
+  const n = 16;
+  for(let i=0;i<n;i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = (Math.PI*2*i)/n + Math.random()*0.3;
+    const dist = 40 + Math.random()*50;
+    p.style.setProperty('--px', `${Math.cos(angle)*dist}px`);
+    p.style.setProperty('--py', `${Math.sin(angle)*dist}px`);
+    layer.appendChild(p);
+    setTimeout(()=>p.remove(), 750);
+  }
+}
+
+/* ---------- seat helpers: rotate the table so mySeat always sits "south" (bottom) ---------- */
+function cssPosOf(seat){
+  const my = state.mySeat || 'south';
+  const partner = my==='north' ? 'south' : 'north';
+  if(seat===my) return 'south';
+  if(seat===partner) return 'north';
+  return seat; // west/east are always the bot seats
+}
+
+/* ---------- render ---------- */
+function cardHTML(card, extraClass, dataAttr){
+  const info = SUITS[card.suit];
+  const cls = info.color==='red' ? 'pcard red' : 'pcard';
+  return `<div class="${cls} ${extraClass||''}" ${dataAttr||''}>
+    <div class="r">${rankLabel(card.rank)}</div>
+    <div class="s">${info.symbol}</div>
+    <div class="r" style="align-self:flex-end;transform:rotate(180deg);">${rankLabel(card.rank)}</div>
+  </div>`;
+}
+function backFanHTML(count){
+  let html='';
+  for(let i=0;i<count;i++) html += `<div class="card-back"></div>`;
+  return html;
+}
+function medallionHTML(){
+  if(!state.trump) return `<div class="medallion empty">؟</div>`;
+  const info = SUITS[state.trump];
+  const cls = info.color==='red'?'suit-red':'suit-black';
+  return `<div class="medallion"><span class="${cls}">${info.symbol}</span></div>`;
+}
+function nameTagHTML(seat){
+  if(!seat) return '';
+  const active = state.turn===seat && state.phase==='playing';
+  const isHakem = state.hakem===seat;
+  const isMe = seat===state.mySeat;
+  const isPartner = !isMe && seat!=='west' && seat!=='east';
+  const offline = isPartner && !state.partnerConnected;
+  const displayName = isMe && state.profile.name.trim() ? state.profile.name.trim() : (state.seatNames[seat] || seat);
+  const avatarHTML = isMe ? `<span class="avatar frame-${state.profile.frame}">${state.profile.avatar}</span>` : '';
+  return `<div class="name-tag ${active?'active':''}">
+    ${avatarHTML}<span class="dot"></span>${displayName}${isHakem?` <span class="hakem-mark">(حاکم)</span>`:''}${offline?` <span class="hakem-mark" style="color:#e0524a;">(قطع)</span>`:''}
+  </div>`;
+}
+function seatsHTML(){
+  const bySeat = {};
+  ['south','west','north','east'].forEach(abs=>{ bySeat[cssPosOf(abs)] = abs; });
+  return `
+    <div class="seat north">${nameTagHTML(bySeat['north'])}<div class="back-fan">${backFanHTML(state.handCounts[bySeat['north']]||0)}</div></div>
+    <div class="seat west">${nameTagHTML(bySeat['west'])}<div class="back-fan">${backFanHTML(state.handCounts[bySeat['west']]||0)}</div></div>
+    <div class="seat east">${nameTagHTML(bySeat['east'])}<div class="back-fan">${backFanHTML(state.handCounts[bySeat['east']]||0)}</div></div>
+    <div class="seat south">${nameTagHTML(bySeat['south'])}</div>
+  `;
+}
+function trickCardsHTML(){
+  let html='';
+  for(const play of state.currentTrick){
+    const winning = state.trickWinnerSeat===play.seat;
+    html += `<div class="trick-card p-${cssPosOf(play.seat)} ${winning?'winner':''}">${cardHTML(play.card)}</div>`;
+  }
+  return html;
+}
+function handHTML(){
+  const hand = state.hand || [];
+  const n = hand.length;
+  const spread = Math.min(34, 320/Math.max(n,1));
+  return hand.map((c,i)=>{
+    const offset = (i - (n-1)/2) * spread;
+    const rot = (i - (n-1)/2) * 3;
+    const led = state.currentTrick.length ? state.currentTrick[0].card.suit : null;
+    const mustFollow = led && hand.some(cc=>cc.suit===led) && c.suit!==led;
+    const notYourTurn = !(state.phase==='playing' && state.turn===state.mySeat);
+    const disabled = mustFollow || notYourTurn;
+    const selected = state.selectedIndex===i ? 'selected' : '';
+    const shaking = state.shakeIndex===i ? 'shake' : '';
+    const extra = `${disabled?'disabled':''} ${selected} ${shaking}`.trim();
+    return cardHTML(c, extra, `style="--tx:${offset}px;--rot:${rot}deg;z-index:${i}" data-card-index="${i}"`);
+  }).join('');
+}
+
+function settingsHTML(){
+  const tab = state.settingsTab;
+  const profileTab = `
+    <div class="profile-row">
+      <span class="avatar frame-${state.profile.frame}">${state.profile.avatar}</span>
+      <input id="profile-name-input" type="text" maxlength="16" placeholder="اسمت رو بنویس" value="${state.profile.name.replace(/"/g,'&quot;')}">
+    </div>
+    <div class="settings-section">
+      <h3>آواتار</h3>
+      <div class="swatch-grid small">
+        ${AVATARS.map(a=>`<div class="swatch ${state.profile.avatar===a?'active':''}" data-set-avatar="${a}">
+          <div class="chip">${a}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>قاب پروفایل</h3>
+      <div class="swatch-grid">
+        ${FRAMES.map(f=>`<div class="swatch ${state.profile.frame===f.id?'active':''}" data-set-frame="${f.id}">
+          <span class="avatar frame-${f.id}" style="width:100%;height:34px;border-radius:8px;">${state.profile.avatar}</span>
+          <div class="lbl">${f.label}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>بک‌گراند</h3>
+      <div class="swatch-grid">
+        ${BACKGROUNDS.map(b=>`<div class="swatch ${state.profile.background===b.id?'active':''}" data-set-bg="${b.id}">
+          <div class="chip" style="background:${b.c}"></div>
+          <div class="lbl">${b.label}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    ${state.screen==='game'?`<div class="settings-section">
+      <h3>تست شبکه</h3>
+      <button class="btn" style="width:100%;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="simulate-disconnect">قطع واقعی اتصال (تست reconnect)</button>
+    </div>`:''}`;
+  const themeTab = `
+    <div class="settings-section">
+      <h3>پوسته‌ی کارت</h3>
+      <div class="swatch-grid">
+        ${SKINS.map(sk=>`<div class="swatch ${state.skin===sk.id?'active':''}" data-set-skin="${sk.id}">
+          <div class="chip" style="background:linear-gradient(135deg,${sk.c1},${sk.c2})"></div>
+          <div class="lbl">${sk.label}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>میز بازی</h3>
+      <div class="swatch-grid">
+        ${TABLES.map(tb=>`<div class="swatch ${state.table===tb.id?'active':''}" data-set-table="${tb.id}">
+          <div class="chip" style="background:linear-gradient(135deg,${tb.c1},${tb.c2})"></div>
+          <div class="lbl">${tb.label}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  return `<div class="overlay"><div class="settings-box">
+    <h2>پروفایل و شخصی‌سازی</h2>
+    <div class="settings-tabs">
+      <div class="settings-tab ${tab==='profile'?'active':''}" data-set-tab="profile">پروفایل</div>
+      <div class="settings-tab ${tab==='theme'?'active':''}" data-set-tab="theme">پوسته و میز</div>
+    </div>
+    ${tab==='profile'?profileTab:themeTab}
+    <button class="btn settings-close" data-action="close-settings">بستن</button>
+  </div></div>`;
+}
+
+function renderLogin(app){
+  app.innerHTML = `
+    <div class="screen-wrap">
+      <div class="screen-logo">حکم</div>
+      <div class="screen-sub">پاسور ایرانی — آنلاین با دوستان</div>
+      <div class="auth-card">
+        <button class="auth-btn primary" data-action="login-google">ورود با گوگل</button>
+        <div class="auth-divider">یا</div>
+        <button class="auth-btn" data-action="login-guest">ادامه به‌عنوان مهمان</button>
+      </div>
+      <div class="lobby-note">برای بازی آنلاین باید سرور (server.py) روشن باشه. آدرس اتصال: ${SERVER_URL}</div>
+    </div>`;
+}
+function renderLobby(app){
+  app.innerHTML = `
+    <div class="screen-wrap">
+      <div class="lobby-profile">
+        <span class="avatar frame-${state.profile.frame}">${state.profile.avatar}</span>
+        <div class="info"><b>${state.profile.name||'بازیکن'}</b><span>${state.rank}</span></div>
+        <div class="icon-btn" data-action="open-settings" title="تنظیمات">⚙</div>
+      </div>
+      <div class="lobby-actions">
+        <div class="lobby-btn primary" data-action="quick-match">
+          <div><div class="t">بازی سریع</div><div class="d">متچ‌میکینگ خودکار با بازیکن دیگه</div></div>
+          <span>🎯</span>
+        </div>
+        <div class="lobby-btn" data-action="create-room">
+          <div><div class="t">ساخت اتاق خصوصی</div><div class="d">یه کد بساز و برای دوستات بفرست</div></div>
+          <span>🔒</span>
+        </div>
+      </div>
+      <div class="auth-divider" style="width:100%">پیوستن با کد</div>
+      <div class="join-row">
+        <input id="join-code-input" type="text" maxlength="6" placeholder="ABCD12">
+        <button class="btn" data-action="join-room">ورود</button>
+      </div>
+      <div class="lobby-note">اینا الان روی سرور واقعی WebSocket کار می‌کنن. برای تست reconnect، وسط بازی از تنظیمات (⚙) اتصال رو قطع کن.</div>
+    </div>`;
+}
+function renderMatchmaking(app){
+  app.innerHTML = `
+    <div class="screen-wrap">
+      <div class="mm-spinner"></div>
+      <div class="screen-logo" style="font-size:20px;">در حال پیدا کردن حریف...</div>
+      <div class="mm-stat">
+        <span>رتبه: <b>${state.rank}</b></span>
+        <span>زمان: <b>${state.mmSeconds}s</b></span>
+        <span>پینگ: <b>${state.ping}</b></span>
+      </div>
+      <button class="btn" style="margin-top:24px;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="cancel-matchmaking">لغو</button>
+    </div>`;
+}
+function renderRoomWait(app){
+  const joined = state.roomFriendJoined;
+  app.innerHTML = `
+    <div class="screen-wrap">
+      <div class="screen-logo" style="font-size:20px;">اتاق خصوصی</div>
+      <div class="room-code-box"><div class="code">${state.roomCode||''}</div></div>
+      <div class="room-slot"><span class="avatar frame-${state.profile.frame}">${state.profile.avatar}</span> ${state.profile.name||'شما'} (میزبان)</div>
+      <div class="room-slot ${joined?'':'empty'}">${joined?'🟢 دوست شما وصل شد':'⏳ در انتظار پیوستن دوست...'}</div>
+      <button class="btn" style="margin-top:18px;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="leave-room">خروج از اتاق</button>
+      <div class="lobby-note">این کد رو برای دوستت بفرست؛ اون باید توی «پیوستن با کد» همین کد رو وارد کنه (هر دو باید به همین سرور وصل باشید).</div>
+    </div>`;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  app.dataset.skin = state.skin;
+  app.dataset.table = state.table;
+  document.body.dataset.bg = state.profile.background;
+
+  if(state.screen==='login'){ renderLogin(app); return; }
+  if(state.screen==='lobby'){ renderLobby(app); return; }
+  if(state.screen==='matchmaking'){ renderMatchmaking(app); return; }
+  if(state.screen==='room-wait'){ renderRoomWait(app); return; }
+
+  let overlay = '';
+
+  if(state.showSettings){
+    overlay = settingsHTML();
+  } else if(!state.phase){
+    overlay = `<div class="overlay"><div class="card-box">
+      <h2>در حال آماده‌سازی بازی...</h2>
+      <p>چند لحظه صبر کن تا کارت‌ها پخش بشه.</p>
+    </div></div>`;
+  } else if(state.phase==='choosing-trump' && state.hakem===state.mySeat){
+    const counts={};
+    (state.hand||[]).forEach(c=>counts[c.suit]=(counts[c.suit]||0)+1);
+    overlay = `<div class="overlay"><div class="card-box">
+      <h2>شما حاکم هستید!</h2>
+      <p>یکی از این ۵ کارت رو دارید. یک خال رو به عنوان «حکم» انتخاب کنید:</p>
+      <div class="my5">${(state.hand||[]).map(c=>cardHTML(c)).join('')}</div>
+      <div class="suit-grid">
+        ${SUIT_ORDER.map(s=>`<div class="suit-btn" data-choose-trump="${s}">
+          <span class="sym" style="color:${SUITS[s].color==='red'?'var(--maroon)':'#e6dcc4'}">${SUITS[s].symbol}</span>
+          ${SUITS[s].name} (${counts[s]||0})
+        </div>`).join('')}
+      </div>
+    </div></div>`;
+  } else if(state.phase==='choosing-trump'){
+    overlay = `<div class="overlay"><div class="card-box">
+      <h2>انتخاب حکم</h2>
+      <p>${state.seatNames[state.hakem]||''} حاکم این دست است و در حال انتخاب خال حکم است...</p>
+    </div></div>`;
+  } else if(state.phase==='hand-end'){
+    const t = state.handWinnerTeam;
+    overlay = `<div class="overlay"><div class="card-box">
+      <h2>${t==='A'?'دست به تیم شما رسید! 🎉':'این دست رو حریف برد'}</h2>
+      <p>نتیجه‌ی این دست: ${state.tricksWon.A} - ${state.tricksWon.B} (تیک)<br>
+      امتیاز مسابقه: تیم شما ${state.roundsWon.A} — حریف ${state.roundsWon.B}</p>
+      <button class="btn" data-action="next-hand">دست بعدی</button>
+    </div></div>`;
+  } else if(state.phase==='match-end'){
+    const t = state.matchWinnerTeam;
+    overlay = `<div class="overlay"><div class="card-box">
+      <h2>${t==='A'?'برنده شدید! 🏆':'مسابقه رو باختید'}</h2>
+      <p>نتیجه‌ی نهایی: تیم شما ${state.roundsWon.A} دست — حریف ${state.roundsWon.B} دست</p>
+      <button class="btn" data-action="new-match">مسابقه‌ی جدید</button>
+    </div></div>`;
+  }
+
+  app.innerHTML = `
+    ${state.reconnecting?`<div class="reconnect-banner">📡 اتصال قطع شد — در حال تلاش برای اتصال مجدد...</div>`:''}
+    <div class="topbar">
+      <div class="brand"><b>حکم</b><span>فاز ۴ — آنلاین (سرور واقعی)</span></div>
+      <div class="topbar-actions">
+        <div class="ping-badge ${typeof state.ping==='number'&&state.ping>150?'bad':''}"><span class="dot2"></span>${state.ping}</div>
+        <div class="score-pill"><span class="a">تیم شما ${state.roundsWon.A}</span><span class="sep">–</span><span class="b">${state.roundsWon.B} حریف</span></div>
+        <div class="icon-btn" data-action="open-settings" title="پوسته و میز">⚙</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div class="felt"></div>
+      <div class="rug-medallion"></div>
+      ${medallionHTML()}
+      ${seatsHTML()}
+      <div class="trick-area">${trickCardsHTML()}</div>
+      <div class="particle-layer"></div>
+    </div>
+    <div class="hand">${handHTML()}</div>
+    <div class="footnote">تیک‌های این دست — تیم شما: ${state.tricksWon.A} &nbsp;|&nbsp; حریف: ${state.tricksWon.B}<br>فاز ۴: ورود مهمان، اتاق خصوصی و بازی سریع روی سرور واقعی با WebSocket، پینگ واقعی و reconnect خودکار. سیستم رتبه‌بندی واقعی و اقتصاد بازی در فازهای بعدی.</div>
+    ${overlay}
+    ${state.toast?`<div class="toast">${state.toast}</div>`:''}
+  `;
+}
+
+/* ---------- events (delegated) ---------- */
+document.getElementById('app').addEventListener('click', (e)=>{
+  const loginGoogleBtn = e.target.closest('[data-action="login-google"]');
+  if(loginGoogleBtn){ loginGoogle(); return; }
+  const loginGuestBtn = e.target.closest('[data-action="login-guest"]');
+  if(loginGuestBtn){ loginGuest(); return; }
+  const quickMatchBtn = e.target.closest('[data-action="quick-match"]');
+  if(quickMatchBtn){ quickMatch(); return; }
+  const createRoomBtn = e.target.closest('[data-action="create-room"]');
+  if(createRoomBtn){ createRoom(); return; }
+  const joinRoomBtn = e.target.closest('[data-action="join-room"]');
+  if(joinRoomBtn){ const inp=document.getElementById('join-code-input'); joinRoom(inp?inp.value:''); return; }
+  const cancelMmBtn = e.target.closest('[data-action="cancel-matchmaking"]');
+  if(cancelMmBtn){ cancelMatchmaking(); return; }
+  const leaveRoomBtn = e.target.closest('[data-action="leave-room"]');
+  if(leaveRoomBtn){ leaveRoom(); return; }
+  const disconnectBtn = e.target.closest('[data-action="simulate-disconnect"]');
+  if(disconnectBtn){ simulateDisconnect(); return; }
+  const openSettings = e.target.closest('[data-action="open-settings"]');
+  if(openSettings){ state.showSettings=true; render(); return; }
+  const closeSettings = e.target.closest('[data-action="close-settings"]');
+  if(closeSettings){ state.showSettings=false; render(); return; }
+  const skinSwatch = e.target.closest('[data-set-skin]');
+  if(skinSwatch){ state.skin = skinSwatch.dataset.setSkin; render(); return; }
+  const tableSwatch = e.target.closest('[data-set-table]');
+  if(tableSwatch){ state.table = tableSwatch.dataset.setTable; render(); return; }
+  const tabBtn = e.target.closest('[data-set-tab]');
+  if(tabBtn){ state.settingsTab = tabBtn.dataset.setTab; render(); return; }
+  const avatarSwatch = e.target.closest('[data-set-avatar]');
+  if(avatarSwatch){ state.profile.avatar = avatarSwatch.dataset.setAvatar; render(); return; }
+  const frameSwatch = e.target.closest('[data-set-frame]');
+  if(frameSwatch){ state.profile.frame = frameSwatch.dataset.setFrame; render(); return; }
+  const bgSwatch = e.target.closest('[data-set-bg]');
+  if(bgSwatch){ state.profile.background = bgSwatch.dataset.setBg; render(); return; }
+  const nextBtn = e.target.closest('[data-action="next-hand"]');
+  if(nextBtn){ sendNextHand(); return; }
+  const newMatchBtn = e.target.closest('[data-action="new-match"]');
+  if(newMatchBtn){ sendNewMatch(); return; }
+  const trumpBtn = e.target.closest('[data-choose-trump]');
+  if(trumpBtn){ sendChooseTrump(trumpBtn.dataset.chooseTrump); return; }
+  const feltEl = e.target.closest('.felt, .rug-medallion, .trick-area');
+  if(feltEl && state.selectedIndex!=null){ state.selectedIndex=null; render(); }
+});
+
+document.getElementById('app').addEventListener('input', (e)=>{
+  if(e.target && e.target.id==='profile-name-input'){
+    state.profile.name = e.target.value;
+  }
+});
+
+/* select-on-first-tap, play-on-second-tap; dragging just previews and snaps back */
+function handleCardTap(idx){
+  if(!(state.phase==='playing' && state.turn===state.mySeat)) return;
+  const hand = state.hand;
+  const card = hand[idx];
+  if(!card) return;
+  const led = state.currentTrick.length ? state.currentTrick[0].card.suit : null;
+  const mustFollow = led && hand.some(c=>c.suit===led) && card.suit!==led;
+  if(mustFollow){
+    showToast('باید همخال بازی کنید');
+    state.shakeIndex = idx;
+    render();
+    setTimeout(()=>{ state.shakeIndex=null; render(); }, 400);
+    return;
+  }
+  if(state.selectedIndex===idx){
+    sendPlayCard(card);
+    state.selectedIndex = null;
+    render();
+  } else {
+    state.selectedIndex = idx;
+    render();
+  }
+}
+
+let drag = null;
+document.addEventListener('pointerdown', (e)=>{
+  const cardEl = e.target.closest('.hand [data-card-index]');
+  if(!cardEl || cardEl.classList.contains('disabled')) return;
+  if(!(state.phase==='playing' && state.turn===state.mySeat)) return;
+  drag = { idx: parseInt(cardEl.dataset.cardIndex,10), cardEl, startX:e.clientX, startY:e.clientY, moved:false };
+  cardEl.classList.add('dragging');
+  if(cardEl.setPointerCapture) { try{ cardEl.setPointerCapture(e.pointerId); }catch(err){} }
+});
+document.addEventListener('pointermove', (e)=>{
+  if(!drag || !document.contains(drag.cardEl)) return;
+  const dx = e.clientX-drag.startX, dy = e.clientY-drag.startY;
+  if(Math.abs(dx)>6 || Math.abs(dy)>6) drag.moved = true;
+  if(drag.moved){
+    drag.cardEl.style.transform = `translate(${dx}px, ${dy}px) rotate(0deg) scale(1.1)`;
+  }
+});
+function endDrag(){
+  if(!drag) return;
+  const {idx, cardEl, moved} = drag;
+  if(document.contains(cardEl)){
+    cardEl.classList.remove('dragging');
+    cardEl.style.transform = '';
+  }
+  drag = null;
+  if(!moved) handleCardTap(idx);
+}
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+
+render();
+</script>
+</body>
+</html>
