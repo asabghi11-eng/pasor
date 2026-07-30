@@ -26,6 +26,7 @@ ws://localhost:8000/ws
 """
 
 import asyncio
+import datetime
 import json
 import os
 import random
@@ -40,6 +41,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import hokm_game as G
 import hokm_ranks as R
 import hokm_economy as E
+import hokm_social as S
+import hokm_tournament as T
 
 app = FastAPI()
 app.add_middleware(
@@ -83,6 +86,34 @@ class Player:
 
     # Phase 7 — social (in-memory only; see note at bottom of file)
     friends: set = field(default_factory=set)
+    clan_id: Optional[str] = None
+    last_gift_date: str = ""
+
+    # Phase 8 — tournaments
+    active_tournament: Optional[str] = None
+
+
+@dataclass
+class Clan:
+    id: str
+    name: str
+    code: str
+    owner_id: str
+    members: set = field(default_factory=set)
+    xp: int = 0
+    level: int = 1
+
+
+@dataclass
+class Tournament:
+    id: str
+    name: str
+    size: int
+    mode: str                       # "league" | "knockout"
+    owner_id: str
+    status: str = "registration"    # registration | active | finished
+    participants: dict = field(default_factory=dict)   # player_id -> hokm_tournament participant dict
+    created_at: str = field(default_factory=lambda: datetime.datetime.utcnow().isoformat())
 
 
 PLAYERS: dict[str, Player] = {}
@@ -90,6 +121,9 @@ SESSION_TO_PLAYER: dict[str, str] = {}
 MM_QUEUE: list[str] = []          # player_ids waiting for quick match
 ROOMS: dict[str, "Room"] = {}
 CODE_TO_ROOM: dict[str, str] = {}
+CLANS: dict[str, Clan] = {}
+CLAN_CODE_TO_ID: dict[str, str] = {}
+TOURNAMENTS: dict[str, Tournament] = {}
 
 
 # ------------------------------------------------------------------ room ---
@@ -181,6 +215,28 @@ def economy_payload(p: "Player") -> dict:
         "missions": p.missions,
         "shop": E.SHOP_ITEMS,
         "canSpinWheel": p.last_wheel_spin != E.today_str(),
+    }
+
+
+def clan_payload(p: "Player") -> dict:
+    clan = CLANS.get(p.clan_id) if p.clan_id else None
+    if not clan:
+        return {"type": "clan_state", "clan": None}
+    return {
+        "type": "clan_state",
+        "clan": {
+            "id": clan.id,
+            "name": clan.name,
+            "code": clan.code,
+            "ownerId": clan.owner_id,
+            "level": clan.level,
+            "xp": clan.xp,
+            "xpNeeded": S.clan_xp_for_level(clan.level),
+            "members": [
+                {"playerId": mid, "name": PLAYERS[mid].name, "online": PLAYERS[mid].connected}
+                for mid in clan.members if mid in PLAYERS
+            ],
+        },
     }
 
 
@@ -436,6 +492,86 @@ async def apply_rank_changes(room: Room, winner_team: str):
             "missions": p.missions,
         })
 
+        # Phase 7 — clan XP: every member's match nudges their clan along
+        if p.clan_id and p.clan_id in CLANS:
+            clan = CLANS[p.clan_id]
+            gain = S.CLAN_XP_PER_MATCH + (S.CLAN_XP_PER_WIN_BONUS if won else 0)
+            clan_result = S.add_clan_xp(clan.xp, clan.level, gain)
+            clan.xp, clan.level = clan_result["xp"], clan_result["level"]
+            for mid in clan.members:
+                if mid in PLAYERS:
+                    await send(mid, clan_payload(PLAYERS[mid]))
+
+        # Phase 8 — tournaments: report this match's result if the player
+        # currently has an active tournament running
+        if p.active_tournament and p.active_tournament in TOURNAMENTS:
+            await report_tournament_match(TOURNAMENTS[p.active_tournament], pid, won)
+
+
+def tournament_payload(tour: "Tournament") -> dict:
+    ranked = T.standings(tour.participants)
+    return {
+        "type": "tournament_state",
+        "id": tour.id,
+        "name": tour.name,
+        "size": tour.size,
+        "mode": tour.mode,
+        "status": tour.status,
+        "ownerId": tour.owner_id,
+        "standings": [
+            {
+                "playerId": pid,
+                "name": PLAYERS[pid].name if pid in PLAYERS else "؟",
+                "points": part["points"],
+                "wins": part["wins"],
+                "losses": part["losses"],
+                "eliminated": part["eliminated"],
+            }
+            for pid, part in ranked
+        ],
+    }
+
+
+async def broadcast_tournament(tour: "Tournament"):
+    payload = tournament_payload(tour)
+    for pid in tour.participants:
+        await send(pid, payload)
+
+
+async def report_tournament_match(tour: "Tournament", player_id: str, won: bool):
+    part = tour.participants.get(player_id)
+    if not part or part["eliminated"] or tour.status != "active":
+        return
+    T.record_match(part, won)
+
+    if tour.mode == "knockout" and T.should_run_knockout_cut(tour.participants):
+        eliminated = T.apply_knockout_cut(tour.participants)
+        for pid in eliminated:
+            if pid in PLAYERS:
+                PLAYERS[pid].active_tournament = None
+                await send(pid, {"type": "tournament_eliminated", "tournamentId": tour.id})
+
+    if T.is_finished(tour.participants, tour.mode):
+        await finish_tournament(tour)
+    else:
+        await broadcast_tournament(tour)
+
+
+async def finish_tournament(tour: "Tournament"):
+    tour.status = "finished"
+    ranked_ids = [pid for pid, _ in T.standings(tour.participants)]
+    prizes = T.prizes_for(tour.size, ranked_ids)
+    for pid, prize in prizes.items():
+        p = PLAYERS.get(pid)
+        if not p:
+            continue
+        p.wallet["coins"] += prize["coins"]
+        p.wallet["gems"] += prize["gems"]
+        p.active_tournament = None
+        await send(pid, {"type": "tournament_finished", "tournamentId": tour.id, "place": prize["place"], "prize": prize})
+        await send(pid, economy_payload(p))
+    await broadcast_tournament(tour)
+
 
 async def maybe_cover_pending_decision(room: Room, seat: str):
     """Called right when a seat's connection drops. If it's currently that
@@ -684,6 +820,180 @@ async def handle_message(player_id: str, msg: dict):
         await send(player_id, {"type": "friends_list", "friends": online})
         return
 
+    # ---------------------------------------------------------- Phase 7: clan --
+
+    if t == "create_clan":
+        if p.clan_id:
+            await send(player_id, {"type": "clan_error", "message": "قبلاً عضو یک باشگاه هستی"})
+            return
+        error = S.validate_clan_name(msg.get("name"))
+        if error:
+            await send(player_id, {"type": "clan_error", "message": error})
+            return
+        clan_id = str(uuid.uuid4())
+        code = S.new_clan_code()
+        while code in CLAN_CODE_TO_ID:
+            code = S.new_clan_code()
+        clan = Clan(id=clan_id, name=msg["name"].strip(), code=code, owner_id=player_id, members={player_id})
+        CLANS[clan_id] = clan
+        CLAN_CODE_TO_ID[code] = clan_id
+        p.clan_id = clan_id
+        await send(player_id, clan_payload(p))
+        return
+
+    if t == "join_clan":
+        if p.clan_id:
+            await send(player_id, {"type": "clan_error", "message": "اول باید از باشگاه فعلی خارج شوی"})
+            return
+        code = (msg.get("code") or "").strip().upper()
+        clan_id = CLAN_CODE_TO_ID.get(code)
+        clan = CLANS.get(clan_id) if clan_id else None
+        if not clan:
+            await send(player_id, {"type": "clan_error", "message": "کد باشگاه پیدا نشد"})
+            return
+        if len(clan.members) >= S.CLAN_MAX_MEMBERS:
+            await send(player_id, {"type": "clan_error", "message": "این باشگاه پر است"})
+            return
+        clan.members.add(player_id)
+        p.clan_id = clan.id
+        for mid in clan.members:
+            if mid in PLAYERS:
+                await send(mid, clan_payload(PLAYERS[mid]))
+        return
+
+    if t == "leave_clan":
+        if not p.clan_id or p.clan_id not in CLANS:
+            await send(player_id, {"type": "clan_error", "message": "عضو هیچ باشگاهی نیستی"})
+            return
+        clan = CLANS[p.clan_id]
+        clan.members.discard(player_id)
+        p.clan_id = None
+        if not clan.members:
+            CLANS.pop(clan.id, None)
+            CLAN_CODE_TO_ID.pop(clan.code, None)
+        elif clan.owner_id == player_id:
+            clan.owner_id = next(iter(clan.members))
+        await send(player_id, clan_payload(p))
+        for mid in clan.members:
+            if mid in PLAYERS:
+                await send(mid, clan_payload(PLAYERS[mid]))
+        return
+
+    if t == "get_clan":
+        await send(player_id, clan_payload(p))
+        return
+
+    # ---------------------------------------------------------- Phase 7: gift --
+
+    if t == "send_gift":
+        target_id = msg.get("playerId")
+        amount = msg.get("amount")
+        if target_id not in p.friends:
+            await send(player_id, {"type": "gift_error", "message": "فقط می‌تونی به دوستانت هدیه بدی"})
+            return
+        target = PLAYERS.get(target_id)
+        if not target:
+            await send(player_id, {"type": "gift_error", "message": "این بازیکن آنلاین نیست"})
+            return
+        error = S.can_send_gift(p.last_gift_date, p.wallet["coins"], amount)
+        if error:
+            await send(player_id, {"type": "gift_error", "message": error})
+            return
+        amount = int(amount)
+        p.wallet["coins"] -= amount
+        p.last_gift_date = S.today_str()
+        target.wallet["coins"] += amount
+        await send(player_id, {"type": "gift_sent", "playerId": target_id, "name": target.name, "amount": amount})
+        await send(player_id, economy_payload(p))
+        await send(target_id, {"type": "gift_received", "playerId": player_id, "name": p.name, "amount": amount})
+        await send(target_id, economy_payload(target))
+        return
+
+    # ---------------------------------------------------------- leaderboard --
+
+    if t == "get_leaderboard":
+        ranked = sorted(
+            (pl for pl in PLAYERS.values() if pl.connected),
+            key=lambda pl: pl.rr, reverse=True,
+        )[:20]
+        await send(player_id, {
+            "type": "leaderboard",
+            "players": [
+                {"playerId": pl.id, "name": pl.name, "rr": pl.rr, "rank": R.rank_info(pl.rr)}
+                for pl in ranked
+            ],
+        })
+        return
+
+    # ------------------------------------------------------- Phase 8: tournaments --
+
+    if t == "list_tournaments":
+        open_tours = [tr for tr in TOURNAMENTS.values() if tr.status == "registration"]
+        await send(player_id, {
+            "type": "tournament_list",
+            "tournaments": [
+                {"id": tr.id, "name": tr.name, "size": tr.size, "mode": tr.mode,
+                 "joined": len(tr.participants), "status": tr.status}
+                for tr in open_tours
+            ],
+        })
+        return
+
+    if t == "create_tournament":
+        name, size, mode = msg.get("name"), msg.get("size"), msg.get("mode", "league")
+        error = T.validate_new_tournament(name, size, mode)
+        if error:
+            await send(player_id, {"type": "tournament_error", "message": error})
+            return
+        tour_id = str(uuid.uuid4())
+        tour = Tournament(id=tour_id, name=name.strip(), size=int(size), mode=mode, owner_id=player_id)
+        tour.participants[player_id] = T.new_participant()
+        TOURNAMENTS[tour_id] = tour
+        p.active_tournament = tour_id
+        await send(player_id, tournament_payload(tour))
+        return
+
+    if t == "join_tournament":
+        tour = TOURNAMENTS.get(msg.get("tournamentId"))
+        if not tour or tour.status != "registration":
+            await send(player_id, {"type": "tournament_error", "message": "این تورنمنت برای ثبت‌نام باز نیست"})
+            return
+        if p.active_tournament:
+            await send(player_id, {"type": "tournament_error", "message": "همین الان در یک تورنمنت دیگر هستی"})
+            return
+        if len(tour.participants) >= tour.size:
+            await send(player_id, {"type": "tournament_error", "message": "تورنمنت پر است"})
+            return
+        tour.participants[player_id] = T.new_participant()
+        p.active_tournament = tour.id
+        if len(tour.participants) >= tour.size:
+            tour.status = "active"
+        await broadcast_tournament(tour)
+        return
+
+    if t == "leave_tournament":
+        tour = TOURNAMENTS.get(p.active_tournament) if p.active_tournament else None
+        if tour and tour.status == "registration":
+            tour.participants.pop(player_id, None)
+            p.active_tournament = None
+            if not tour.participants:
+                TOURNAMENTS.pop(tour.id, None)
+            await send(player_id, {"type": "tournament_state", "id": None, "standings": []})
+        return
+
+    if t == "start_tournament":
+        tour = TOURNAMENTS.get(msg.get("tournamentId"))
+        if tour and tour.owner_id == player_id and tour.status == "registration" and len(tour.participants) >= 2:
+            tour.status = "active"
+            await broadcast_tournament(tour)
+        return
+
+    if t == "get_tournament":
+        tour = TOURNAMENTS.get(msg.get("tournamentId") or p.active_tournament)
+        if tour:
+            await send(player_id, tournament_payload(tour))
+        return
+
 
 async def start_match_or_next_hand(room: Room):
     deal_hand(room, G.next_seat(room.hakem))
@@ -720,6 +1030,7 @@ async def ws_endpoint(ws: WebSocket):
             if season_change:
                 await send(player_id, {"type": "season_reset", **season_change})
             await send(player_id, economy_payload(p))
+            await send(player_id, clan_payload(p))
             room = ROOMS.get(p.room_id) if p.room_id else None
             if room:
                 async with room.lock:
@@ -737,6 +1048,7 @@ async def ws_endpoint(ws: WebSocket):
             check_daily_missions(p)
             await send(player_id, {"type": "login_ok", "player_id": player_id, "session_token": token, "name": name, "rank": R.rank_info(p.rr)})
             await send(player_id, economy_payload(p))
+            await send(player_id, clan_payload(p))
             await send(player_id, {"type": "screen", "name": "lobby"})
 
         else:

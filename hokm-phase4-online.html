@@ -506,6 +506,8 @@ function connect(firstMessage){
   intentionalClose = false;
   ws = new WebSocket(SERVER_URL);
   if (window.HokmEconomy) HokmEconomy.attach(ws);
+  if (window.HokmSocial) HokmSocial.attach(ws);
+  if (window.HokmTournament) HokmTournament.attach(ws);
   ws.onopen = ()=>{
     reconnectAttempts = 0;
     clearTimeout(reconnectTimer);
@@ -1136,5 +1138,7 @@ document.addEventListener('pointercancel', endDrag);
 render();
 </script>
 <script src="economy-panel.js"></script>
+<script src="social-panel.js"></script>
+<script src="tournament-panel.js"></script>
 </body>
 </html>
