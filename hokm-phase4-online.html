@@ -505,6 +505,7 @@ function connect(firstMessage){
   try{ if(ws) ws.close(); }catch(e){}
   intentionalClose = false;
   ws = new WebSocket(SERVER_URL);
+  if (window.HokmEconomy) HokmEconomy.attach(ws);
   ws.onopen = ()=>{
     reconnectAttempts = 0;
     clearTimeout(reconnectTimer);
@@ -1134,5 +1135,6 @@ document.addEventListener('pointercancel', endDrag);
 
 render();
 </script>
+<script src="economy-panel.js"></script>
 </body>
 </html>

@@ -81,6 +81,9 @@ class Player:
     missions_date: str = ""
     last_wheel_spin: str = ""
 
+    # Phase 7 — social (in-memory only; see note at bottom of file)
+    friends: set = field(default_factory=set)
+
 
 PLAYERS: dict[str, Player] = {}
 SESSION_TO_PLAYER: dict[str, str] = {}
@@ -113,6 +116,10 @@ class Room:
     trick_winner_seat: Optional[str] = None
     hand_winner_team: Optional[str] = None
     match_winner_team: Optional[str] = None
+
+    # Phase 7 — social
+    spectators: set = field(default_factory=set)  # player_ids watching, no seat
+    chat_log: list = field(default_factory=list)   # last 50 chat/emoji events
 
     def seat_of(self, player_id: str) -> Optional[str]:
         for seat, pid in self.seats.items():
@@ -197,19 +204,25 @@ async def send(player_id: str, payload: dict):
 
 
 async def broadcast_room(room: Room, payload_fn):
-    """payload_fn(seat) -> dict, called per connected human seat."""
+    """payload_fn(seat_or_None) -> dict, called per connected human seat,
+    then once more per spectator with seat=None."""
     for seat, pid in room.seats.items():
         if pid and pid != "bot":
             await send(pid, payload_fn(seat))
+    for pid in room.spectators:
+        await send(pid, payload_fn(None))
 
 
-def state_for(room: Room, viewer_seat: str) -> dict:
-    hand = room.hands.get(viewer_seat, [])
-    counts = {s: len(room.hands.get(s, [])) for s in G.SEATS if s != viewer_seat}
-    partner = "north" if viewer_seat == "south" else "south"
+def state_for(room: Room, viewer_seat: Optional[str]) -> dict:
+    is_spectator = viewer_seat is None
+    hand = room.hands.get(viewer_seat, []) if not is_spectator else []
+    counts = {s: len(room.hands.get(s, [])) for s in (G.SEATS if is_spectator else [x for x in G.SEATS if x != viewer_seat])}
+    partner = ("north" if viewer_seat == "south" else "south") if viewer_seat in SEAT_HUMANS else None
     return {
         "type": "game_state",
         "mySeat": viewer_seat,
+        "spectating": is_spectator,
+        "spectatorCount": len(room.spectators),
         "phase": room.phase,
         "hakem": room.hakem,
         "trump": room.trump,
@@ -233,6 +246,16 @@ async def broadcast_state(room: Room):
 
 async def broadcast_toast(room: Room, message: str):
     await broadcast_room(room, lambda seat: {"type": "toast", "message": message})
+
+
+async def broadcast_chat(room: Room, event: dict):
+    room.chat_log.append(event)
+    room.chat_log[:] = room.chat_log[-50:]
+    await broadcast_room(room, lambda seat: {"type": "chat", **event})
+
+
+MAX_CHAT_LEN = 200
+QUICK_CHAT_PHRASES = ["دمت گرم!", "آفرین :)", "بد شانسی!", "حکم خوبی بود", "دوباره بازی می‌کنیم؟", "خیلی خوب بود!"]
 
 
 # ------------------------------------------------------------- game flow ---
@@ -595,6 +618,72 @@ async def handle_message(player_id: str, msg: dict):
             await send(player_id, economy_payload(p))
         return
 
+    # ---------------------------------------------------------- Phase 7 --
+
+    if t == "spectate_room":
+        code = (msg.get("code") or "").strip().upper()
+        room_id = CODE_TO_ROOM.get(code)
+        room = ROOMS.get(room_id) if room_id else None
+        if not room:
+            await send(player_id, {"type": "error", "message": "اتاقی با این کد پیدا نشد"})
+            return
+        room.spectators.add(player_id)
+        p.room_id, p.seat = room.id, None
+        await send(player_id, state_for(room, None))
+        await broadcast_toast(room, f"{p.name} به عنوان تماشاگر پیوست")
+        return
+
+    if t == "leave_spectate":
+        room = ROOMS.get(p.room_id)
+        if room:
+            room.spectators.discard(player_id)
+        p.room_id = None
+        await send(player_id, {"type": "screen", "name": "lobby"})
+        return
+
+    if t == "chat_message":
+        room = ROOMS.get(p.room_id)
+        if not room:
+            return
+        text = (msg.get("text") or "").strip()
+        if not text or len(text) > MAX_CHAT_LEN:
+            return
+        await broadcast_chat(room, {"kind": "text", "from": p.name, "seat": p.seat, "text": text})
+        return
+
+    if t == "quick_chat":
+        room = ROOMS.get(p.room_id)
+        if not room:
+            return
+        idx = msg.get("phraseIndex")
+        if not isinstance(idx, int) or not (0 <= idx < len(QUICK_CHAT_PHRASES)):
+            return
+        await broadcast_chat(room, {"kind": "text", "from": p.name, "seat": p.seat, "text": QUICK_CHAT_PHRASES[idx]})
+        return
+
+    if t == "emoji":
+        room = ROOMS.get(p.room_id)
+        if not room:
+            return
+        emoji = (msg.get("emoji") or "")[:8]
+        if not emoji:
+            return
+        await broadcast_chat(room, {"kind": "emoji", "from": p.name, "seat": p.seat, "emoji": emoji})
+        return
+
+    if t == "add_friend":
+        target_id = msg.get("playerId")
+        if target_id and target_id in PLAYERS and target_id != player_id:
+            p.friends.add(target_id)
+            await send(player_id, {"type": "friend_added", "playerId": target_id, "name": PLAYERS[target_id].name})
+        return
+
+    if t == "get_friends":
+        online = [{"playerId": fid, "name": PLAYERS[fid].name, "online": PLAYERS[fid].connected}
+                  for fid in p.friends if fid in PLAYERS]
+        await send(player_id, {"type": "friends_list", "friends": online})
+        return
+
 
 async def start_match_or_next_hand(room: Room):
     deal_hand(room, G.next_seat(room.hakem))
@@ -674,7 +763,9 @@ async def ws_endpoint(ws: WebSocket):
                 MM_QUEUE.remove(player_id)
             room = ROOMS.get(p.room_id) if p.room_id else None
             if room:
-                if room.phase == "waiting":
+                if player_id in room.spectators:
+                    room.spectators.discard(player_id)
+                elif room.phase == "waiting":
                     if room.code:
                         CODE_TO_ROOM.pop(room.code, None)
                     ROOMS.pop(room.id, None)
