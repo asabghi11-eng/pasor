@@ -34,6 +34,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 import hokm_game as G
+import hokm_ranks as R
 
 app = FastAPI()
 app.add_middleware(
@@ -44,8 +45,8 @@ app.add_middleware(
 )
 
 GRACE_SECONDS = float(os.environ.get("HOKM_GRACE_SECONDS", 20))  # how long we wait for a disconnected human before a bot covers their turn
-BOT_THINK_SECONDS = 1.1   # cosmetic delay so bot moves don't feel instant
-TRICK_RESOLVE_DELAY = 1.3 # time the "who won the trick" highlight stays up
+BOT_THINK_SECONDS = float(os.environ.get("HOKM_BOT_THINK_SECONDS", 1.1))   # cosmetic delay so bot moves don't feel instant
+TRICK_RESOLVE_DELAY = float(os.environ.get("HOKM_TRICK_RESOLVE_DELAY", 1.3)) # time the "who won the trick" highlight stays up
 
 SEAT_HUMANS = ["south", "north"]   # the 2 real-player seats in this MVP
 SEAT_BOTS = {"west": "امیر", "east": "رضا"}  # bot display names, matching the original client
@@ -61,7 +62,8 @@ class Player:
     connected: bool = True
     room_id: Optional[str] = None
     seat: Optional[str] = None
-    rank: str = "نقره‌ای ۲"
+    rr: int = 0
+    season_id: str = field(default_factory=R.current_season_id)
 
 
 PLAYERS: dict[str, Player] = {}
@@ -120,6 +122,19 @@ class Room:
     def bump_token(self) -> int:
         self.turn_token += 1
         return self.turn_token
+
+
+def check_season(p: "Player") -> Optional[dict]:
+    """Call whenever a player connects. If a new season has started since
+    their last visit, soft-reset their RR and report what changed."""
+    season = R.current_season_id()
+    if p.season_id == season:
+        return None
+    before = R.rank_info(p.rr)
+    p.rr = R.season_soft_reset(p.rr)
+    p.season_id = season
+    after = R.rank_info(p.rr)
+    return {"season": season, "before": before, "after": after}
 
 
 def new_code() -> str:
@@ -283,12 +298,29 @@ async def _finish_trick_after_delay(room: Room, winner_seat: str, token: int):
             if room.rounds_won[winner_team] >= G.TARGET_ROUNDS:
                 room.match_winner_team = winner_team
                 room.phase = "match-end"
+                await broadcast_state(room)
+                await apply_rank_changes(room, winner_team)
             else:
                 room.phase = "hand-end"
-            await broadcast_state(room)
+                await broadcast_state(room)
         else:
             await broadcast_state(room)
             await schedule_seat_decision(room, room.turn, "play")
+
+
+async def apply_rank_changes(room: Room, winner_team: str):
+    """South+north are always the two real players (partnered as team A;
+    west/east bots are team B), so both humans win or lose together. Update
+    each connected human's RR and tell them what changed."""
+    won = winner_team == "A"
+    for seat in SEAT_HUMANS:
+        pid = room.seats.get(seat)
+        p = PLAYERS.get(pid) if pid else None
+        if not p:
+            continue
+        result = R.apply_result(p.rr, won)
+        p.rr = result["rr"]
+        await send(pid, {"type": "rank_update", **result})
 
 
 async def maybe_cover_pending_decision(room: Room, seat: str):
@@ -464,7 +496,10 @@ async def ws_endpoint(ws: WebSocket):
                 return
             p.ws = ws
             p.connected = True
-            await send(player_id, {"type": "login_ok", "player_id": p.id, "session_token": p.session_token, "name": p.name, "rank": p.rank})
+            season_change = check_season(p)
+            await send(player_id, {"type": "login_ok", "player_id": p.id, "session_token": p.session_token, "name": p.name, "rank": R.rank_info(p.rr)})
+            if season_change:
+                await send(player_id, {"type": "season_reset", **season_change})
             room = ROOMS.get(p.room_id) if p.room_id else None
             if room:
                 async with room.lock:
@@ -477,7 +512,7 @@ async def ws_endpoint(ws: WebSocket):
             token = str(uuid.uuid4())
             PLAYERS[player_id] = Player(id=player_id, session_token=token, name=name, ws=ws, connected=True)
             SESSION_TO_PLAYER[token] = player_id
-            await send(player_id, {"type": "login_ok", "player_id": player_id, "session_token": token, "name": name, "rank": PLAYERS[player_id].rank})
+            await send(player_id, {"type": "login_ok", "player_id": player_id, "session_token": token, "name": name, "rank": R.rank_info(PLAYERS[player_id].rr)})
             await send(player_id, {"type": "screen", "name": "lobby"})
         else:
             await ws.send_text(json.dumps({"type": "error", "message": "لطفاً ابتدا وارد شو"}))

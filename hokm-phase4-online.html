@@ -346,6 +346,25 @@
   .lobby-btn .d{font-size:11px;color:#9db8ab;margin-top:2px;}
   .lobby-btn.primary{background:linear-gradient(160deg,#1f4536,#173327);border-color:var(--gold);}
   .lobby-note{font-size:10.5px;color:#5f7a6d;margin-top:16px;line-height:1.8;}
+
+  .rank-badge{display:flex;align-items:center;gap:6px;}
+  .rank-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 6px 0 var(--rank-color);}
+  .rank-label{font-size:11px;color:#9db8ab;}
+  .rank-progress{width:54px;height:4px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-inline-start:2px;}
+  .rank-progress-fill{height:100%;border-radius:3px;}
+
+  .rank-change{
+    margin:14px 0 4px;padding:14px 16px;border-radius:12px;
+    background:rgba(0,0,0,.25);border:1px solid #2a4f3f;
+    display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;color:#cfd9d2;
+  }
+  .rank-change .arrow{color:#5f7a6d;}
+  .rank-change .after{font-weight:700;}
+  .rank-change .delta{font-size:12px;padding:2px 8px;border-radius:20px;}
+  .rank-change .delta.up{color:#8fe0a8;background:rgba(143,224,168,.12);}
+  .rank-change .delta.down{color:#e08f8f;background:rgba(224,143,143,.12);}
+  .rank-change .promo-tag{font-size:11px;color:var(--gold-bright);}
+  .rank-change .demote-tag{font-size:11px;color:#e08f8f;}
   .join-row{display:flex;gap:8px;width:100%;margin-bottom:10px;}
   .join-row input{
     flex:1;background:rgba(0,0,0,.25);border:1px solid #2a4f3f;border-radius:8px;
@@ -419,7 +438,9 @@ let state = {
   toast:null, selectedIndex:null, shakeIndex:null,
   skin:'classic', table:'persian-rug', showSettings:false, settingsTab:'profile',
   profile:{name:'', avatar:'😎', frame:'none', background:'default'},
-  roomCode:null, roomFriendJoined:false, mmSeconds:0, ping:'—', reconnecting:false, rank:'نقره‌ای ۲',
+  roomCode:null, roomFriendJoined:false, mmSeconds:0, ping:'—', reconnecting:false,
+  rank:{tier:'برنزی', division:3, label:'برنزی ۳', rr:0, progress:0, color:'#a5682a'},
+  rankChange:null,
 };
 const AVATARS = ['😎','🦁','🐉','🦅','🃏','👑','🐺','⚔️','🌙','🔥','🎯','💎'];
 const FRAMES = [
@@ -552,9 +573,18 @@ function handleServerMessage(msg){
       if(msg.name) state.profile.name = msg.name;
       if(msg.rank) state.rank = msg.rank;
       break;
+    case 'season_reset':
+      state.rank = msg.after;
+      showToast(`فصل جدید شروع شد — رتبه‌ت به ${msg.after.label} برگشت`);
+      break;
+    case 'rank_update':
+      state.rank = msg.after;
+      state.rankChange = msg;
+      break;
     case 'screen':
       clearInterval(state.mmTimer);
       state.screen = msg.name;
+      if(msg.name === 'lobby') state.rankChange = null;
       break;
     case 'room_wait':
       state.screen = 'room-wait';
@@ -660,6 +690,7 @@ function sendNextHand(){
   sendMsg({type:'next_hand'});
 }
 function sendNewMatch(){
+  state.rankChange = null;
   sendMsg({type:'new_match'});
 }
 
@@ -838,12 +869,36 @@ function renderLogin(app){
       <div class="lobby-note">برای بازی آنلاین باید سرور (server.py) روشن باشه. آدرس اتصال: ${SERVER_URL}</div>
     </div>`;
 }
+function rankBadgeHTML(rank){
+  const color = rank.color || '#cda449';
+  const bar = (rank.progress==null) ? '' :
+    `<div class="rank-progress"><div class="rank-progress-fill" style="width:${rank.progress}%;background:${color}"></div></div>`;
+  return `<div class="rank-badge" style="--rank-color:${color}">
+    <span class="rank-dot" style="background:${color}"></span>
+    <span class="rank-label">${rank.label}</span>
+    ${bar}
+  </div>`;
+}
+function rankChangeHTML(){
+  const c = state.rankChange;
+  if(!c) return '';
+  const up = c.delta >= 0;
+  const tag = c.promoted ? `<span class="promo-tag">🎉 ارتقا به ${c.after.tier}!</span>`
+            : c.demoted ? `<span class="demote-tag">⚠️ سقوط به ${c.after.tier}</span>` : '';
+  return `<div class="rank-change">
+    <span>${c.before.label}</span>
+    <span class="arrow">→</span>
+    <span class="after">${c.after.label}</span>
+    <span class="delta ${up?'up':'down'}">${c.delta>=0?'+':''}${c.delta} RR</span>
+    ${tag}
+  </div>`;
+}
 function renderLobby(app){
   app.innerHTML = `
     <div class="screen-wrap">
       <div class="lobby-profile">
         <span class="avatar frame-${state.profile.frame}">${state.profile.avatar}</span>
-        <div class="info"><b>${state.profile.name||'بازیکن'}</b><span>${state.rank}</span></div>
+        <div class="info"><b>${state.profile.name||'بازیکن'}</b>${rankBadgeHTML(state.rank)}</div>
         <div class="icon-btn" data-action="open-settings" title="تنظیمات">⚙</div>
       </div>
       <div class="lobby-actions">
@@ -870,7 +925,7 @@ function renderMatchmaking(app){
       <div class="mm-spinner"></div>
       <div class="screen-logo" style="font-size:20px;">در حال پیدا کردن حریف...</div>
       <div class="mm-stat">
-        <span>رتبه: <b>${state.rank}</b></span>
+        <span>رتبه: <b>${state.rank.label}</b></span>
         <span>زمان: <b>${state.mmSeconds}s</b></span>
         <span>پینگ: <b>${state.ping}</b></span>
       </div>
@@ -942,6 +997,7 @@ function render(){
     overlay = `<div class="overlay"><div class="card-box">
       <h2>${t==='A'?'برنده شدید! 🏆':'مسابقه رو باختید'}</h2>
       <p>نتیجه‌ی نهایی: تیم شما ${state.roundsWon.A} دست — حریف ${state.roundsWon.B} دست</p>
+      ${rankChangeHTML()}
       <button class="btn" data-action="new-match">مسابقه‌ی جدید</button>
     </div></div>`;
   }
