@@ -1,5 +1,5 @@
 """
-Hokm real backend — MVP (Phase 4, real networking version)
+Hokm real backend — MVP (Phase 4 networking + Phase 5 ranks + Phase 6 economy)
 
 - Guest login (name only, no password) — Google login can be layered on later.
 - Quick match: pairs 2 real players as partners (south + north), fills
@@ -13,6 +13,9 @@ Hokm real backend — MVP (Phase 4, real networking version)
   {type:"reconnect", session_token}. If it's your turn while you're
   disconnected, after a grace period the bot plays for you so the match
   isn't stuck — control returns to you the moment you reconnect.
+- Ranks (Phase 5): RR ladder Bronze..Legend, monthly season soft-reset.
+- Economy (Phase 6): coins/gems/XP wallet, 3 daily missions, shop,
+  once-a-day lucky wheel, gem-bought prize boxes.
 
 Run locally:
     pip install -r requirements.txt --break-system-packages
@@ -21,6 +24,7 @@ Run locally:
 Then point the client (see hokm-phase4-online.html) at
 ws://localhost:8000/ws
 """
+
 import asyncio
 import json
 import os
@@ -35,6 +39,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import hokm_game as G
 import hokm_ranks as R
+import hokm_economy as E
 
 app = FastAPI()
 app.add_middleware(
@@ -44,15 +49,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-GRACE_SECONDS = float(os.environ.get("HOKM_GRACE_SECONDS", 20))  # how long we wait for a disconnected human before a bot covers their turn
-BOT_THINK_SECONDS = float(os.environ.get("HOKM_BOT_THINK_SECONDS", 1.1))   # cosmetic delay so bot moves don't feel instant
-TRICK_RESOLVE_DELAY = float(os.environ.get("HOKM_TRICK_RESOLVE_DELAY", 1.3)) # time the "who won the trick" highlight stays up
+GRACE_SECONDS = float(os.environ.get("HOKM_GRACE_SECONDS", 20))          # how long we wait for a disconnected human before a bot covers their turn
+BOT_THINK_SECONDS = float(os.environ.get("HOKM_BOT_THINK_SECONDS", 1.1))  # cosmetic delay so bot moves don't feel instant
+TRICK_RESOLVE_DELAY = float(os.environ.get("HOKM_TRICK_RESOLVE_DELAY", 1.3))  # time the "who won the trick" highlight stays up
 
-SEAT_HUMANS = ["south", "north"]   # the 2 real-player seats in this MVP
-SEAT_BOTS = {"west": "امیر", "east": "رضا"}  # bot display names, matching the original client
+SEAT_HUMANS = ["south", "north"]                 # the 2 real-player seats in this MVP
+SEAT_BOTS = {"west": "امیر", "east": "رضا"}       # bot display names, matching the original client
 
 
 # ---------------------------------------------------------------- players --
+
 @dataclass
 class Player:
     id: str
@@ -62,8 +68,18 @@ class Player:
     connected: bool = True
     room_id: Optional[str] = None
     seat: Optional[str] = None
+
+    # Phase 5 — ranking
     rr: int = 0
     season_id: str = field(default_factory=R.current_season_id)
+    win_streak: int = 0
+
+    # Phase 6 — economy
+    wallet: dict = field(default_factory=E.new_wallet)
+    inventory: set = field(default_factory=set)
+    missions: list = field(default_factory=list)
+    missions_date: str = ""
+    last_wheel_spin: str = ""
 
 
 PLAYERS: dict[str, Player] = {}
@@ -74,15 +90,17 @@ CODE_TO_ROOM: dict[str, str] = {}
 
 
 # ------------------------------------------------------------------ room ---
+
 @dataclass
 class Room:
     id: str
-    seats: dict           # seat -> player_id | "bot"
+    seats: dict                    # seat -> player_id | "bot"
     code: Optional[str] = None
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     turn_token: int = 0
+
     # game state
-    phase: str = "waiting"   # waiting | idle | choosing-trump | playing | hand-end | match-end
+    phase: str = "waiting"          # waiting | idle | choosing-trump | playing | hand-end | match-end
     hands: dict = field(default_factory=lambda: {s: [] for s in G.SEATS})
     deck: list = field(default_factory=list)
     hakem: Optional[str] = None
@@ -137,6 +155,28 @@ def check_season(p: "Player") -> Optional[dict]:
     return {"season": season, "before": before, "after": after}
 
 
+def check_daily_missions(p: "Player") -> bool:
+    """Call whenever a player connects. Refreshes their 3 daily missions
+    if the calendar day has rolled over since their last visit."""
+    today = E.today_str()
+    if p.missions_date != today:
+        p.missions = E.generate_daily_missions(today, seed_extra=p.id)
+        p.missions_date = today
+        return True
+    return False
+
+
+def economy_payload(p: "Player") -> dict:
+    return {
+        "type": "economy_state",
+        "wallet": p.wallet,
+        "inventory": list(p.inventory),
+        "missions": p.missions,
+        "shop": E.SHOP_ITEMS,
+        "canSpinWheel": p.last_wheel_spin != E.today_str(),
+    }
+
+
 def new_code() -> str:
     while True:
         code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
@@ -145,6 +185,7 @@ def new_code() -> str:
 
 
 # --------------------------------------------------------------- sending ---
+
 async def send(player_id: str, payload: dict):
     p = PLAYERS.get(player_id)
     if not p or not p.ws or not p.connected:
@@ -195,6 +236,7 @@ async def broadcast_toast(room: Room, message: str):
 
 
 # ------------------------------------------------------------- game flow ---
+
 def deal_hand(room: Room, hakem: str):
     room.deck = G.shuffle(G.create_deck())
     room.hands = {s: [] for s in G.SEATS}
@@ -265,6 +307,7 @@ async def _do_play_card(room: Room, seat: str, card: dict):
     hand = room.hands[seat]
     hand[:] = [c for c in hand if not (c["suit"] == card["suit"] and c["rank"] == card["rank"])]
     room.current_trick.append({"seat": seat, "card": card})
+
     if len(room.current_trick) < 4:
         room.turn = G.next_seat(room.turn)
         await broadcast_state(room)
@@ -286,15 +329,40 @@ async def _finish_trick_after_delay(room: Room, winner_seat: str, token: int):
             return
         team = G.TEAM[winner_seat]
         room.tricks_won[team] += 1
+
+        # Phase 6: credit the human(s) on the winning team with a trick,
+        # and the hakem (if human) with a "won a trick while hakem" tick.
+        for seat in SEAT_HUMANS:
+            pid = room.seats.get(seat)
+            p = PLAYERS.get(pid) if pid else None
+            if p and G.TEAM[seat] == team:
+                E.bump_mission_progress(p.missions, "tricks", 1)
+
         room.trick_leader = winner_seat
         room.turn = winner_seat
         room.current_trick = []
         room.trick_winner_seat = None
+
         total_played = room.tricks_won["A"] + room.tricks_won["B"]
         if room.tricks_won["A"] >= 7 or room.tricks_won["B"] >= 7 or total_played >= 13:
             winner_team = "A" if room.tricks_won["A"] > room.tricks_won["B"] else "B"
             room.rounds_won[winner_team] += 1
             room.hand_winner_team = winner_team
+
+            was_sur = room.tricks_won[winner_team] == 7 and room.tricks_won["A" if winner_team == "B" else "B"] == 0
+            if was_sur:
+                for seat in SEAT_HUMANS:
+                    pid = room.seats.get(seat)
+                    p = PLAYERS.get(pid) if pid else None
+                    if p and G.TEAM[seat] == winner_team:
+                        E.bump_mission_progress(p.missions, "sur", 1)
+
+            if room.hakem and G.TEAM[room.hakem] == winner_team:
+                hakem_pid = room.seats.get(room.hakem)
+                hakem_p = PLAYERS.get(hakem_pid) if hakem_pid else None
+                if hakem_p:
+                    E.bump_mission_progress(hakem_p.missions, "hakem_wins", 1)
+
             if room.rounds_won[winner_team] >= G.TARGET_ROUNDS:
                 room.match_winner_team = winner_team
                 room.phase = "match-end"
@@ -310,17 +378,40 @@ async def _finish_trick_after_delay(room: Room, winner_seat: str, token: int):
 
 async def apply_rank_changes(room: Room, winner_team: str):
     """South+north are always the two real players (partnered as team A;
-    west/east bots are team B), so both humans win or lose together. Update
-    each connected human's RR and tell them what changed."""
+    west/east bots are team B), so both humans win or lose together.
+    Updates each connected human's RR *and* their economy wallet/missions,
+    and tells them what changed."""
     won = winner_team == "A"
     for seat in SEAT_HUMANS:
         pid = room.seats.get(seat)
         p = PLAYERS.get(pid) if pid else None
         if not p:
             continue
-        result = R.apply_result(p.rr, won)
-        p.rr = result["rr"]
-        await send(pid, {"type": "rank_update", **result})
+
+        # Phase 5 — rank
+        rank_result = R.apply_result(p.rr, won, win_streak=p.win_streak)
+        p.rr = rank_result["rr"]
+        p.win_streak = p.win_streak + 1 if won else 0
+        await send(pid, {"type": "rank_update", **rank_result})
+
+        # Phase 6 — economy: match reward, "played"/"win" missions, XP/level
+        reward = E.match_reward(won, win_streak=p.win_streak)
+        p.wallet["coins"] += reward["coins"]
+        p.wallet["gems"] += reward["gems"]
+        xp_result = E.add_xp(p.wallet["xp"], p.wallet["level"], reward["xp"])
+        p.wallet.update(xp_result)
+        E.bump_mission_progress(p.missions, "played", 1)
+        if won:
+            E.bump_mission_progress(p.missions, "wins", 1)
+
+        await send(pid, {
+            "type": "economy_update",
+            "reason": "match_end",
+            "reward": reward,
+            "leveledUp": xp_result["levelsGained"] > 0,
+            "wallet": p.wallet,
+            "missions": p.missions,
+        })
 
 
 async def maybe_cover_pending_decision(room: Room, seat: str):
@@ -334,7 +425,6 @@ async def maybe_cover_pending_decision(room: Room, seat: str):
         await schedule_seat_decision(room, seat, "play")
 
 
-
 async def start_match(room: Room):
     room.rounds_won = {"A": 0, "B": 0}
     hakem = random.choice(G.SEATS)
@@ -345,6 +435,7 @@ async def start_match(room: Room):
 
 
 # --------------------------------------------------------- room lifecycle --
+
 async def start_game_between(p1: str, p2: str):
     room = Room(id=str(uuid.uuid4()), seats={"south": p1, "north": p2, "west": "bot", "east": "bot"})
     ROOMS[room.id] = room
@@ -368,6 +459,7 @@ async def try_match_queue():
 
 
 # ------------------------------------------------------------- ws handler --
+
 async def handle_message(player_id: str, msg: dict):
     p = PLAYERS[player_id]
     t = msg.get("type")
@@ -466,6 +558,43 @@ async def handle_message(player_id: str, msg: dict):
         await send(player_id, {"type": "pong", "ts": msg.get("ts")})
         return
 
+    # ---------------------------------------------------------- Phase 6 --
+
+    if t == "get_economy":
+        check_daily_missions(p)
+        await send(player_id, economy_payload(p))
+        return
+
+    if t == "claim_mission":
+        result = E.claim_mission(p.wallet, p.missions, msg.get("missionId"))
+        await send(player_id, {"type": "claim_mission_result", **result})
+        if result.get("ok"):
+            await send(player_id, economy_payload(p))
+        return
+
+    if t == "spin_wheel":
+        result = E.spin_wheel(p.wallet, p.last_wheel_spin)
+        if result.get("ok"):
+            p.last_wheel_spin = result["lastSpinDate"]
+        await send(player_id, {"type": "spin_wheel_result", **result})
+        if result.get("ok"):
+            await send(player_id, economy_payload(p))
+        return
+
+    if t == "buy_item":
+        result = E.buy_item(p.wallet, p.inventory, msg.get("itemId"))
+        await send(player_id, {"type": "buy_item_result", **result})
+        if result.get("ok"):
+            await send(player_id, economy_payload(p))
+        return
+
+    if t == "open_box":
+        result = E.open_box(p.wallet, msg.get("boxType"))
+        await send(player_id, {"type": "open_box_result", **result})
+        if result.get("ok"):
+            await send(player_id, economy_payload(p))
+        return
+
 
 async def start_match_or_next_hand(room: Room):
     deal_hand(room, G.next_seat(room.hakem))
@@ -497,23 +626,30 @@ async def ws_endpoint(ws: WebSocket):
             p.ws = ws
             p.connected = True
             season_change = check_season(p)
+            missions_refreshed = check_daily_missions(p)
             await send(player_id, {"type": "login_ok", "player_id": p.id, "session_token": p.session_token, "name": p.name, "rank": R.rank_info(p.rr)})
             if season_change:
                 await send(player_id, {"type": "season_reset", **season_change})
+            await send(player_id, economy_payload(p))
             room = ROOMS.get(p.room_id) if p.room_id else None
             if room:
                 async with room.lock:
                     await broadcast_state(room)
             else:
                 await send(player_id, {"type": "screen", "name": "lobby"})
+
         elif first.get("type") == "login":
             name = (first.get("name") or "").strip() or f"مهمان{random.randint(1000, 9999)}"
             player_id = str(uuid.uuid4())
             token = str(uuid.uuid4())
             PLAYERS[player_id] = Player(id=player_id, session_token=token, name=name, ws=ws, connected=True)
             SESSION_TO_PLAYER[token] = player_id
-            await send(player_id, {"type": "login_ok", "player_id": player_id, "session_token": token, "name": name, "rank": R.rank_info(PLAYERS[player_id].rr)})
+            p = PLAYERS[player_id]
+            check_daily_missions(p)
+            await send(player_id, {"type": "login_ok", "player_id": player_id, "session_token": token, "name": name, "rank": R.rank_info(p.rr)})
+            await send(player_id, economy_payload(p))
             await send(player_id, {"type": "screen", "name": "lobby"})
+
         else:
             await ws.send_text(json.dumps({"type": "error", "message": "لطفاً ابتدا وارد شو"}))
             await ws.close()

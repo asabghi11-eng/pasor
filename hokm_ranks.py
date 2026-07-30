@@ -1,101 +1,136 @@
 """
-Hokm ranking system — Phase 5
+Hokm ranking system — Phase 5.
 
-Design: a single integer "RR" (rank rating) per player drives everything else.
-- 7 tiers: برنزی, نقره‌ای, طلایی, الماسی, استاد, استاد بزرگ, اسطوره
-  (Bronze, Silver, Gold, Diamond, Master, Grand Master, Legend)
-- The first 6 tiers are split into 3 divisions of 100 RR each (300 RR/tier).
-- اسطوره (Legend) is open-ended — no divisions, ranked purely by RR so a
-  future leaderboard (phase 11/12) can sort players within it.
-- Win a match: +25 RR. Lose a match: -20 RR. RR never drops below 0.
-- Season = 1 calendar month. At the start of a new season every player gets
-  a "soft reset": pulled back exactly one tier (never below 0), so climbing
-  stays meaningful but nobody loses everything.
+Six-tier ladder (Bronze -> Silver -> Gold -> Diamond -> Master -> Grand
+Master -> Legend), Bronze..Diamond split into III/II/I divisions of 100 RR
+each, Master+ climb continuously with no divisions. Seasons roll over
+monthly with a soft RR reset so nobody starts a new season at zero, but
+top players still have room to climb again.
 
-This module is pure and stateless — it takes an RR int in, and returns
-plain dicts/ints out. server.py owns persistence (currently in-memory).
+This module is imported by server.py as `hokm_ranks as R` and is required
+for the server to start — without it, `import hokm_ranks as R` fails and
+the whole app crashes on boot.
 """
-from datetime import datetime, timezone
 
-TIERS = ["برنزی", "نقره‌ای", "طلایی", "الماسی", "استاد", "استاد بزرگ", "اسطوره"]
-TIER_COLORS = {
-    "برنزی": "#a5682a",
-    "نقره‌ای": "#9aa5b1",
-    "طلایی": "#e0b23f",
-    "الماسی": "#5ad1e6",
-    "استاد": "#b06bf2",
-    "استاد بزرگ": "#f25b8b",
-    "اسطوره": "#ffd76a",
-}
+import datetime
 
-DIVISION_RR = 100                                  # RR needed per division
-DIVISIONS_PER_TIER = 3                             # divisions in every tier except Legend
-TIER_RR = DIVISION_RR * DIVISIONS_PER_TIER         # 300 RR per tier
-LEGEND_START = TIER_RR * (len(TIERS) - 1)          # 1800 — RR where Legend begins
+# ---------------------------------------------------------------- tiers ---
+
+# (name_fa, name_en, icon, rr_floor) — rr_floor is where the tier begins.
+# Bronze/Silver/Gold/Diamond are divided into 3 bands of 100 RR (III, II, I).
+# Master/Grand Master are single continuous bands. Legend has no ceiling.
+TIERS = [
+    {"key": "bronze", "fa": "برنز", "icon": "🥉", "floor": 0, "band": 100, "divisions": 3},
+    {"key": "silver", "fa": "نقره‌ای", "icon": "🥈", "floor": 300, "band": 100, "divisions": 3},
+    {"key": "gold", "fa": "طلایی", "icon": "🥇", "floor": 600, "band": 100, "divisions": 3},
+    {"key": "diamond", "fa": "الماس", "icon": "💎", "floor": 900, "band": 100, "divisions": 3},
+    {"key": "master", "fa": "استاد", "icon": "🏆", "floor": 1200, "band": 300, "divisions": 1},
+    {"key": "grandmaster", "fa": "استاد بزرگ", "icon": "👑", "floor": 1500, "band": 300, "divisions": 1},
+    {"key": "legend", "fa": "افسانه", "icon": "🌟", "floor": 1800, "band": None, "divisions": 1},
+]
+
+DIVISION_LABEL = {3: "III", 2: "II", 1: "I"}  # division 3 = lowest, 1 = highest (about to promote)
 
 WIN_RR = 25
-LOSE_RR = 20
+LOSE_RR = -20
+STREAK_BONUS_STEP = 3     # extra RR per consecutive win beyond the first, capped below
+STREAK_BONUS_CAP = 15
 
-_FA_DIGIT = {"1": "۱", "2": "۲", "3": "۳"}
 
-
-def _division_label(n: int) -> str:
-    return _FA_DIGIT.get(str(n), str(n))
+def _tier_at(rr: int) -> dict:
+    rr = max(0, rr)
+    current = TIERS[0]
+    for tier in TIERS:
+        if rr >= tier["floor"]:
+            current = tier
+        else:
+            break
+    return current
 
 
 def rank_info(rr: int) -> dict:
-    """Turn an RR integer into a full display-ready rank breakdown."""
-    rr = max(0, rr)
-    if rr >= LEGEND_START:
-        tier = TIERS[-1]
+    """Full display info for a given RR value."""
+    rr = max(0, int(rr))
+    tier = _tier_at(rr)
+    into_tier = rr - tier["floor"]
+
+    if tier["band"] is None:
+        # Legend — uncapped, no divisions, no "next" threshold.
         return {
-            "rr": rr,
-            "tierIndex": len(TIERS) - 1,
-            "tier": tier,
+            "tier": tier["key"],
+            "tierName": tier["fa"],
+            "icon": tier["icon"],
             "division": None,
-            "label": tier,
-            "progress": None,          # Legend has no division bar — just climbing RR
-            "color": TIER_COLORS[tier],
+            "label": tier["fa"],
+            "rr": rr,
+            "rrIntoDivision": into_tier,
+            "rrForNext": None,
+            "progressPct": 100,
         }
-    tier_index = min(rr // TIER_RR, len(TIERS) - 2)
-    into_tier = rr - tier_index * TIER_RR
-    division_index = min(into_tier // DIVISION_RR, DIVISIONS_PER_TIER - 1)  # 0,1,2 (low->high)
-    division_number = DIVISIONS_PER_TIER - division_index                  # shown as 3,2,1
-    progress = into_tier - division_index * DIVISION_RR                    # 0..99 within division
-    tier = TIERS[tier_index]
+
+    divisions = tier["divisions"]
+    band = tier["band"]
+    div_index = min(into_tier // band, divisions - 1)  # 0-based from bottom
+    division_number = divisions - div_index            # e.g. 3 -> 2 -> 1
+    rr_into_division = into_tier - div_index * band
+    rr_for_next = band - rr_into_division
+    label = tier["fa"] if divisions == 1 else f"{tier['fa']} {DIVISION_LABEL.get(division_number, '')}"
+
     return {
+        "tier": tier["key"],
+        "tierName": tier["fa"],
+        "icon": tier["icon"],
+        "division": division_number if divisions > 1 else None,
+        "label": label,
         "rr": rr,
-        "tierIndex": tier_index,
-        "tier": tier,
-        "division": division_number,
-        "label": f"{tier} {_division_label(division_number)}",
-        "progress": progress,
-        "color": TIER_COLORS[tier],
+        "rrIntoDivision": rr_into_division,
+        "rrForNext": rr_for_next,
+        "progressPct": round(100 * rr_into_division / band),
     }
 
 
-def apply_result(rr: int, won: bool) -> dict:
-    """Apply a match result to an RR value. Returns before/after + deltas."""
+def apply_result(rr: int, won: bool, win_streak: int = 0) -> dict:
+    """Compute the new RR after a match and report what changed.
+
+    win_streak: consecutive wins *before* this match (0 if this is the
+    first win of a new streak or the player just lost/hasn't played).
+    """
     before = rank_info(rr)
-    delta = WIN_RR if won else -LOSE_RR
+
+    if won:
+        bonus = min(STREAK_BONUS_CAP, win_streak * STREAK_BONUS_STEP)
+        delta = WIN_RR + bonus
+    else:
+        delta = LOSE_RR
+        bonus = 0
+
     new_rr = max(0, rr + delta)
     after = rank_info(new_rr)
+
     return {
         "rr": new_rr,
-        "delta": new_rr - rr,
-        "won": won,
+        "delta": delta,
+        "streakBonus": bonus,
         "before": before,
         "after": after,
-        "promoted": after["tierIndex"] > before["tierIndex"],
-        "demoted": after["tierIndex"] < before["tierIndex"],
+        "promoted": after["tier"] != before["tier"] and new_rr > rr,
+        "demoted": after["tier"] != before["tier"] and new_rr < rr,
     }
 
 
+# --------------------------------------------------------------- season ---
+
 def current_season_id() -> str:
-    now = datetime.now(timezone.utc)
+    """One season per calendar month, e.g. '2026-07'."""
+    now = datetime.datetime.utcnow()
     return f"{now.year:04d}-{now.month:02d}"
 
 
 def season_soft_reset(rr: int) -> int:
-    """Pull the player back exactly one tier at the start of a new season."""
-    return max(0, rr - TIER_RR)
+    """Compress RR toward the middle of Gold (650) by 35% at season start,
+    so high-ranked players keep most of their standing but still have
+    climbing to do, and low-ranked players get a small boost back up."""
+    rr = max(0, int(rr))
+    anchor = 650
+    new_rr = round(rr * 0.65 + anchor * 0.35)
+    return max(0, min(rr, new_rr) if rr > anchor else new_rr)
