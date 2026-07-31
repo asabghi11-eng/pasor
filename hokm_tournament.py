@@ -1,16 +1,20 @@
 """
 Hokm competitive tournaments — Phase 8.
 
-Honest note on why this isn't a classic 1v1 bracket:
-in the current match model (see server.py), the two real players in a
-match are always *partners* (team A: south+north) playing co-operatively
-against two bots (team B: west+east) — there is no human-vs-human seat
-yet. So a head-to-head elimination bracket ("player A vs player B, loser
-is out") isn't something the game engine can run today.
+Update: quick_match now seats 4 real humans together when 4 are queued
+(see server.py's start_game_between / try_match_queue), and
+try_match_queue preferentially groups players who share an active
+tournament — so a tournament match today is genuinely played against
+fellow participants whenever enough of them are queued at once, not
+just "any match while registered" like the original MVP.
 
-Phase 8 is implemented instead as a **points league with knockout
-cutoffs**, which delivers everything on the phase-8 checklist with the
-match model we actually have:
+It's still a **points league with knockout cutoffs**, not a literal
+head-to-head single-elimination bracket ("player A vs player B, loser
+is out") — a match is still 2v2 (partners, not 1v1), so "who plays
+whom" is a foursome, not a pairing. That's a deliberate fit to the
+game itself (Hokm is a partnership game); a true 1v1 bracket would
+need a different match mode entirely. The league format still
+delivers everything on the phase-8 checklist:
 
   - تورنمنت / لیگ: players register, then each of their normal ranked
     matches (quick match or private room) counts toward the tournament
@@ -21,9 +25,6 @@ match model we actually have:
   - جدول: live standings/leaderboard, sorted by tournament points.
   - جایزه: coins/gems prize pool paid out to the top finishers when the
     tournament ends.
-
-When human-vs-human seating lands, this module's standings/prize logic
-still applies unchanged — only how a "match" is produced would change.
 
 Pure functions only (no I/O, no globals) — server.py owns the
 TOURNAMENTS dict and the Player.active_tournament field.

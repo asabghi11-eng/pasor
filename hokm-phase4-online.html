@@ -6,6 +6,10 @@
 <title>حکم — فاز ۴</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Real Google Sign-In (Google Identity Services). Loaded async; if it's
+     blocked/offline the page still works, loginGoogle() just falls back
+     to guest — see the GOOGLE_CLIENT_ID note near SERVER_URL below. -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
     --felt-1:#8a2c22;
@@ -329,6 +333,14 @@
   .auth-btn.primary{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#2a1e0a;border:none;}
   .auth-divider{display:flex;align-items:center;gap:10px;color:#5a7266;font-size:11px;margin:14px 0;}
   .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#2a4f3f;}
+  /* Real Google Identity Services button, invisibly stacked over our
+     RTL-styled "ورود با گوگل" button so the click is genuinely handled
+     by Google's own widget (required — Google doesn't allow driving
+     its sign-in flow from a fully custom button), while what the user
+     sees stays consistent with the rest of our UI. */
+  .google-btn-wrap{position:relative;}
+  .google-btn-wrap .gsi-real{position:absolute;inset:0;opacity:0.001;overflow:hidden;z-index:2;}
+  .google-btn-wrap .gsi-real iframe{width:100%!important;}
 
   .lobby-profile{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid #2a4f3f;border-radius:14px;padding:14px 16px;width:100%;margin-bottom:18px;}
   .lobby-profile .avatar{width:44px;height:44px;font-size:22px;}
@@ -416,10 +428,10 @@
 <script>
 /* ---------- data ---------- */
 const SUITS = {
-  S:{symbol:'♠', name:'پیک', color:'black'},
-  H:{symbol:'♥', name:'دل', color:'red'},
-  D:{symbol:'♦', name:'خشت', color:'red'},
-  C:{symbol:'♣', name:'گشنیز', color:'black'},
+  S:{symbol:'♠', get name(){ return t('suit_spades','پیک'); }, color:'black'},
+  H:{symbol:'♥', get name(){ return t('suit_hearts','دل'); }, color:'red'},
+  D:{symbol:'♦', get name(){ return t('suit_diamonds','خشت'); }, color:'red'},
+  C:{symbol:'♣', get name(){ return t('suit_clubs','گشنیز'); }, color:'black'},
 };
 const SUIT_ORDER = ['S','H','D','C'];
 const RANK_LABEL = {11:'J',12:'Q',13:'K',14:'A'};
@@ -438,10 +450,19 @@ let state = {
   toast:null, selectedIndex:null, shakeIndex:null,
   skin:'classic', table:'persian-rug', showSettings:false, settingsTab:'profile',
   profile:{name:'', avatar:'😎', frame:'none', background:'default'},
-  roomCode:null, roomFriendJoined:false, mmSeconds:0, ping:'—', reconnecting:false,
+  roomCode:null, roomSeats:{}, roomMySeat:null, roomIsHost:false, mmSeconds:0, ping:'—', reconnecting:false, loggingIn:false,
   rank:{tier:'برنزی', division:3, label:'برنزی ۳', rr:0, progress:0, color:'#a5682a'},
   rankChange:null,
+  i18n:{lang:'fa', languages:[], strings:{}},
 };
+/* t(key, fallback): looks up the server-sent catalog for the player's
+   current language; falls back to the original Persian string (passed
+   in at every call site) if the key/catalog isn't loaded yet — so the
+   UI never shows a raw key or blank text before login. */
+function t(key, fallback){
+  const strings = state.i18n && state.i18n.strings;
+  return (strings && strings[key]) || fallback;
+}
 const AVATARS = ['😎','🦁','🐉','🦅','🃏','👑','🐺','⚔️','🌙','🔥','🎯','💎'];
 const FRAMES = [
   {id:'none', label:'ساده'},
@@ -494,6 +515,14 @@ const SERVER_URL = (function(){
   return 'ws://localhost:8000/ws';
 })();
 
+// Real Google Sign-In: paste the OAuth Web Client ID from
+// https://console.cloud.google.com (see the setup steps at the top of
+// hokm_auth.py). Must be the SAME client ID the server was started
+// with (export GOOGLE_CLIENT_ID=...) — Google checks that the token's
+// audience matches. Left empty, loginGoogle() falls back to guest, same
+// as before this was wired up.
+const GOOGLE_CLIENT_ID = "";
+
 let ws = null;
 let sessionToken = null;
 let intentionalClose = false;
@@ -502,28 +531,50 @@ let reconnectTimer = null;
 let pingTimer = null;
 
 function connect(firstMessage){
-  try{ if(ws) ws.close(); }catch(e){}
-  intentionalClose = false;
-  ws = new WebSocket(SERVER_URL);
-  if (window.HokmEconomy) HokmEconomy.attach(ws);
-  if (window.HokmSocial) HokmSocial.attach(ws);
-  if (window.HokmTournament) HokmTournament.attach(ws);
-  ws.onopen = ()=>{
+  // Close any previous socket, but tag it as an intentional close on the
+  // socket ITSELF — not on the shared `intentionalClose` variable. The old
+  // socket's close event fires asynchronously (after this function already
+  // returns), so a shared flag gets overwritten by the time it runs and the
+  // old, on-purpose close gets misread as a real drop — which snaps the UI
+  // back to the login screen right after a successful login. Tagging the
+  // socket instance avoids that race entirely.
+  if(ws){ ws._intentional = true; try{ ws.close(); }catch(e){} }
+  const socket = new WebSocket(SERVER_URL);
+  ws = socket;
+  socket._intentional = false;
+  // IMPORTANT: wire our own handlers — especially onopen, which sends the
+  // login/reconnect message — BEFORE calling any panel's .attach(socket).
+  // The server treats the very first message on a new connection as the
+  // auth message; several panels (e.g. worldcup-panel.js) add their own
+  // "open" listener that fires a request the instant the socket opens.
+  // Event listeners run in registration order, so if a panel's listener
+  // was registered first, its message could reach the server before our
+  // login message — the server then sees a non-login first message and
+  // immediately closes the connection with "ابتدا باید وارد شوید"
+  // (must-login-first), which looks exactly like login silently failing.
+  socket.onopen = ()=>{
     reconnectAttempts = 0;
     clearTimeout(reconnectTimer);
-    if(firstMessage) ws.send(JSON.stringify(firstMessage));
+    if(firstMessage) socket.send(JSON.stringify(firstMessage));
     startPing();
   };
-  ws.onmessage = (ev)=>{
+  socket.onmessage = (ev)=>{
     let msg;
     try{ msg = JSON.parse(ev.data); }catch(e){ return; }
     handleServerMessage(msg);
   };
-  ws.onclose = ()=>{
+  socket.onclose = ()=>{
     stopPing();
-    if(!intentionalClose) handleDrop();
+    if(!socket._intentional) handleDrop();
   };
-  ws.onerror = ()=>{ try{ ws.close(); }catch(e){} };
+  socket.onerror = ()=>{ try{ socket.close(); }catch(e){} };
+  if (window.HokmEconomy) HokmEconomy.attach(socket);
+  if (window.HokmSocial) HokmSocial.attach(socket);
+  if (window.HokmTournament) HokmTournament.attach(socket);
+  if (window.HokmMonetization) HokmMonetization.attach(socket);
+  if (window.HokmStats) HokmStats.attach(socket);
+  if (window.HokmWorldCup) HokmWorldCup.attach(socket);
+  if (window.HokmAchievements) HokmAchievements.attach(socket);
 }
 
 function sendMsg(obj){
@@ -536,6 +587,7 @@ function sendMsg(obj){
 
 function handleDrop(){
   if(!sessionToken){
+    state.loggingIn = false;
     state.screen = 'login';
     render();
     return;
@@ -573,6 +625,7 @@ function handleServerMessage(msg){
     case 'login_ok':
       sessionToken = msg.session_token;
       state.reconnecting = false;
+      state.loggingIn = false;
       if(msg.name) state.profile.name = msg.name;
       if(msg.rank) state.rank = msg.rank;
       break;
@@ -592,7 +645,9 @@ function handleServerMessage(msg){
     case 'room_wait':
       state.screen = 'room-wait';
       state.roomCode = msg.code;
-      state.roomFriendJoined = !!msg.friendJoined;
+      state.roomSeats = msg.seats || {};
+      state.roomMySeat = msg.mySeat || null;
+      state.roomIsHost = !!msg.isHost;
       break;
     case 'game_state':
       applyGameState(msg);
@@ -611,6 +666,13 @@ function handleServerMessage(msg){
       break;
     case 'pong':
       state.ping = Math.max(1, Date.now() - msg.ts) + 'ms';
+      break;
+    case 'i18n_state':
+      state.i18n.lang = msg.language || 'fa';
+      state.i18n.languages = msg.languages || [];
+      state.i18n.strings = msg.strings || {};
+      document.documentElement.lang = state.i18n.lang;
+      document.documentElement.dir = (state.i18n.lang === 'en' || state.i18n.lang === 'tr' || state.i18n.lang === 'ru') ? 'ltr' : 'rtl';
       break;
   }
   render();
@@ -642,13 +704,63 @@ function applyGameState(msg){
   }
 }
 
+// Real Google Sign-In. google.accounts.id fires onGoogleCredential(response)
+// with a signed ID token once the person picks their Google account —
+// the server (hokm_auth.py) verifies that token against Google's own
+// keys before trusting it, so no password or secret ever passes through
+// this page. Requires GOOGLE_CLIENT_ID above to be set; otherwise this
+// whole path is skipped and the button below just logs in as a guest,
+// same behavior as before.
+let gsiInitialized = false;
+function initGoogleSignIn(){
+  if(!GOOGLE_CLIENT_ID || gsiInitialized) return;
+  if(!window.google || !window.google.accounts || !window.google.accounts.id) return; // script still loading
+  window.google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: onGoogleCredential,
+    ux_mode: 'popup',
+  });
+  gsiInitialized = true;
+}
+function onGoogleCredential(response){
+  if(!response || !response.credential){
+    showToast('ورود با گوگل انجام نشد، دوباره تلاش کن');
+    return;
+  }
+  state.loggingIn = true; render();
+  connect({type:'login_google', id_token: response.credential});
+}
+// Renders Google's own (real, clickable) button invisibly on top of our
+// styled "ورود با گوگل" button. Google requires its widget to be the
+// thing that's actually clicked — this keeps our RTL styling while still
+// using Google's real, safe sign-in UI underneath. Must be re-run after
+// every renderLogin() since that rebuilds the DOM node from scratch.
+function renderGoogleButton(){
+  if(!GOOGLE_CLIENT_ID) return;
+  initGoogleSignIn();
+  const el = document.getElementById('gsiRealBtn');
+  if(!el || !window.google || !window.google.accounts || !window.google.accounts.id) return;
+  el.innerHTML = '';
+  window.google.accounts.id.renderButton(el, {type:'standard', width:280, size:'large'});
+}
 function loginGoogle(){
+  if(state.loggingIn) return;
+  if(GOOGLE_CLIENT_ID){
+    // The real Google button sitting invisibly on top of this one already
+    // handles the click. If it hasn't mounted yet (script still loading),
+    // there's nothing useful to do but ask the person to try again.
+    if(!gsiInitialized) showToast('در حال آماده‌سازی ورود با گوگل... چند لحظه دیگه دوباره امتحان کن');
+    return;
+  }
+  state.loggingIn = true; render();
   const name = state.profile.name.trim() || 'کاربر گوگل';
-  showToast('ورود واقعی با گوگل توی فاز بعد اضافه میشه — فعلاً به‌عنوان مهمان وارد شدی');
+  showToast('ورود با گوگل تنظیم نشده — به‌عنوان مهمان وارد شدی');
   state.profile.name = name;
   connect({type:'login', name});
 }
 function loginGuest(){
+  if(state.loggingIn) return;
+  state.loggingIn = true; render();
   const name = state.profile.name.trim() || ('مهمان'+Math.floor(1000+Math.random()*9000));
   state.profile.name = name;
   connect({type:'login', name});
@@ -797,10 +909,10 @@ function settingsHTML(){
   const profileTab = `
     <div class="profile-row">
       <span class="avatar frame-${state.profile.frame}">${state.profile.avatar}</span>
-      <input id="profile-name-input" type="text" maxlength="16" placeholder="اسمت رو بنویس" value="${state.profile.name.replace(/"/g,'&quot;')}">
+      <input id="profile-name-input" type="text" maxlength="16" placeholder="${t('name_placeholder','اسمت رو بنویس')}" value="${state.profile.name.replace(/"/g,'&quot;')}">
     </div>
     <div class="settings-section">
-      <h3>آواتار</h3>
+      <h3>${t('avatar_label','آواتار')}</h3>
       <div class="swatch-grid small">
         ${AVATARS.map(a=>`<div class="swatch ${state.profile.avatar===a?'active':''}" data-set-avatar="${a}">
           <div class="chip">${a}</div>
@@ -808,7 +920,7 @@ function settingsHTML(){
       </div>
     </div>
     <div class="settings-section">
-      <h3>قاب پروفایل</h3>
+      <h3>${t('frame_label','قاب پروفایل')}</h3>
       <div class="swatch-grid">
         ${FRAMES.map(f=>`<div class="swatch ${state.profile.frame===f.id?'active':''}" data-set-frame="${f.id}">
           <span class="avatar frame-${f.id}" style="width:100%;height:34px;border-radius:8px;">${state.profile.avatar}</span>
@@ -817,7 +929,7 @@ function settingsHTML(){
       </div>
     </div>
     <div class="settings-section">
-      <h3>بک‌گراند</h3>
+      <h3>${t('background_label','بک‌گراند')}</h3>
       <div class="swatch-grid">
         ${BACKGROUNDS.map(b=>`<div class="swatch ${state.profile.background===b.id?'active':''}" data-set-bg="${b.id}">
           <div class="chip" style="background:${b.c}"></div>
@@ -826,8 +938,8 @@ function settingsHTML(){
       </div>
     </div>
     ${state.screen==='game'?`<div class="settings-section">
-      <h3>تست شبکه</h3>
-      <button class="btn" style="width:100%;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="simulate-disconnect">قطع واقعی اتصال (تست reconnect)</button>
+      <h3>${t('network_test_label','تست شبکه')}</h3>
+      <button class="btn" style="width:100%;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="simulate-disconnect">${t('disconnect_test_btn','قطع واقعی اتصال (تست reconnect)')}</button>
     </div>`:''}`;
   const themeTab = `
     <div class="settings-section">
@@ -848,14 +960,26 @@ function settingsHTML(){
         </div>`).join('')}
       </div>
     </div>`;
+  const langTab = `
+    <div class="settings-section">
+      <h3>${t('tab_language','زبان')}</h3>
+      <div class="swatch-grid">
+        ${(state.i18n.languages||[]).map(row=>`<div class="swatch ${state.i18n.lang===row.key?'active':''}" data-set-lang="${row.key}">
+          <div class="chip" style="font-size:20px;display:flex;align-items:center;justify-content:center;">${row.flag}</div>
+          <div class="lbl">${row.native}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  const tabContent = tab==='profile' ? profileTab : tab==='lang' ? langTab : themeTab;
   return `<div class="overlay"><div class="settings-box">
-    <h2>پروفایل و شخصی‌سازی</h2>
+    <h2>${t('settings_title','پروفایل و شخصی‌سازی')}</h2>
     <div class="settings-tabs">
-      <div class="settings-tab ${tab==='profile'?'active':''}" data-set-tab="profile">پروفایل</div>
-      <div class="settings-tab ${tab==='theme'?'active':''}" data-set-tab="theme">پوسته و میز</div>
+      <div class="settings-tab ${tab==='profile'?'active':''}" data-set-tab="profile">${t('tab_profile','پروفایل')}</div>
+      <div class="settings-tab ${tab==='theme'?'active':''}" data-set-tab="theme">${t('tab_theme','پوسته و میز')}</div>
+      <div class="settings-tab ${tab==='lang'?'active':''}" data-set-tab="lang">${t('tab_language','زبان')}</div>
     </div>
-    ${tab==='profile'?profileTab:themeTab}
-    <button class="btn settings-close" data-action="close-settings">بستن</button>
+    ${tabContent}
+    <button class="btn settings-close" data-action="close-settings">${t('close_btn','بستن')}</button>
   </div></div>`;
 }
 
@@ -863,13 +987,16 @@ function renderLogin(app){
   app.innerHTML = `
     <div class="screen-wrap">
       <div class="screen-logo">حکم</div>
-      <div class="screen-sub">پاسور ایرانی — آنلاین با دوستان</div>
+      <div class="screen-sub">${t('login_subtitle','پاسور ایرانی — آنلاین با دوستان')}</div>
       <div class="auth-card">
-        <button class="auth-btn primary" data-action="login-google">ورود با گوگل</button>
-        <div class="auth-divider">یا</div>
-        <button class="auth-btn" data-action="login-guest">ادامه به‌عنوان مهمان</button>
+        <div class="google-btn-wrap">
+          <div id="gsiRealBtn" class="gsi-real"></div>
+          <button class="auth-btn primary" data-action="login-google" ${state.loggingIn?'disabled':''}>${t('login_with_google','ورود با گوگل')}</button>
+        </div>
+        <div class="auth-divider">${t('or_divider','یا')}</div>
+        <button class="auth-btn" data-action="login-guest" ${state.loggingIn?'disabled':''}>${state.loggingIn?t('connecting','در حال اتصال...'):t('continue_as_guest','ادامه به‌عنوان مهمان')}</button>
       </div>
-      <div class="lobby-note">برای بازی آنلاین باید سرور (server.py) روشن باشه. آدرس اتصال: ${SERVER_URL}</div>
+      <div class="lobby-note">${t('login_server_note','برای بازی آنلاین باید سرور (server.py) روشن باشه. آدرس اتصال: {url}').replace('{url}', SERVER_URL)}</div>
     </div>`;
 }
 function rankBadgeHTML(rank){
@@ -901,50 +1028,66 @@ function renderLobby(app){
     <div class="screen-wrap">
       <div class="lobby-profile">
         <span class="avatar frame-${state.profile.frame}">${state.profile.avatar}</span>
-        <div class="info"><b>${state.profile.name||'بازیکن'}</b>${rankBadgeHTML(state.rank)}</div>
-        <div class="icon-btn" data-action="open-settings" title="تنظیمات">⚙</div>
+        <div class="info"><b>${state.profile.name||t('default_player_name','بازیکن')}</b>${rankBadgeHTML(state.rank)}</div>
+        <div class="icon-btn" data-action="open-settings" title="${t('settings_tooltip','تنظیمات')}">⚙</div>
       </div>
       <div class="lobby-actions">
         <div class="lobby-btn primary" data-action="quick-match">
-          <div><div class="t">بازی سریع</div><div class="d">متچ‌میکینگ خودکار با بازیکن دیگه</div></div>
+          <div><div class="t">${t('quick_match_title','بازی سریع')}</div><div class="d">${t('quick_match_desc','متچ‌میکینگ خودکار با بازیکن دیگه')}</div></div>
           <span>🎯</span>
         </div>
         <div class="lobby-btn" data-action="create-room">
-          <div><div class="t">ساخت اتاق خصوصی</div><div class="d">یه کد بساز و برای دوستات بفرست</div></div>
+          <div><div class="t">${t('create_room_title','ساخت اتاق خصوصی')}</div><div class="d">${t('create_room_desc','یه کد بساز و برای دوستات بفرست')}</div></div>
           <span>🔒</span>
         </div>
       </div>
-      <div class="auth-divider" style="width:100%">پیوستن با کد</div>
+      <div class="auth-divider" style="width:100%">${t('join_with_code','پیوستن با کد')}</div>
       <div class="join-row">
         <input id="join-code-input" type="text" maxlength="6" placeholder="ABCD12">
-        <button class="btn" data-action="join-room">ورود</button>
+        <button class="btn" data-action="join-room">${t('join_btn','ورود')}</button>
       </div>
-      <div class="lobby-note">اینا الان روی سرور واقعی WebSocket کار می‌کنن. برای تست reconnect، وسط بازی از تنظیمات (⚙) اتصال رو قطع کن.</div>
+      <div class="lobby-note">${t('lobby_note','اینا الان روی سرور واقعی WebSocket کار می‌کنن. برای تست reconnect، وسط بازی از تنظیمات (⚙) اتصال رو قطع کن.')}</div>
     </div>`;
 }
 function renderMatchmaking(app){
   app.innerHTML = `
     <div class="screen-wrap">
       <div class="mm-spinner"></div>
-      <div class="screen-logo" style="font-size:20px;">در حال پیدا کردن حریف...</div>
+      <div class="screen-logo" style="font-size:20px;">${t('finding_opponent','در حال پیدا کردن حریف...')}</div>
       <div class="mm-stat">
-        <span>رتبه: <b>${state.rank.label}</b></span>
-        <span>زمان: <b>${state.mmSeconds}s</b></span>
-        <span>پینگ: <b>${state.ping}</b></span>
+        <span>${t('rank_label','رتبه')}: <b>${state.rank.label}</b></span>
+        <span>${t('time_label','زمان')}: <b>${state.mmSeconds}s</b></span>
+        <span>${t('ping_label','پینگ')}: <b>${state.ping}</b></span>
       </div>
-      <button class="btn" style="margin-top:24px;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="cancel-matchmaking">لغو</button>
+      <button class="btn" style="margin-top:24px;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="cancel-matchmaking">${t('cancel_btn','لغو')}</button>
     </div>`;
 }
 function renderRoomWait(app){
-  const joined = state.roomFriendJoined;
+  const seats = state.roomSeats || {};
+  const seatLabel = {
+    south:t('seat_south_host','جنوب (میزبان)'), north:t('seat_north','شمال'),
+    east:t('seat_east','شرق'), west:t('seat_west','غرب'),
+  };
+  const rows = ['south','north','east','west'].map(seat=>{
+    const name = seats[seat];
+    const isMe = seat === state.roomMySeat;
+    if(name){
+      return `<div class="room-slot">🟢 ${seatLabel[seat]}: ${name}${isMe?' '+t('you_suffix','(شما)'):''}</div>`;
+    }
+    return `<div class="room-slot empty">⏳ ${seatLabel[seat]}: ${t('waiting_join','در انتظار پیوستن...')}</div>`;
+  }).join('');
+  const emptyCount = ['south','north','east','west'].filter(s=>!seats[s]).length;
+  const hostControls = state.roomIsHost && emptyCount > 0
+    ? `<button class="btn" style="margin-top:10px;" data-action="start-with-bots">${t('start_with_bots_btn','شروع بازی با ربات برای صندلی‌های خالی')}</button>`
+    : '';
   app.innerHTML = `
     <div class="screen-wrap">
-      <div class="screen-logo" style="font-size:20px;">اتاق خصوصی</div>
+      <div class="screen-logo" style="font-size:20px;">${t('private_room_title','اتاق خصوصی')}</div>
       <div class="room-code-box"><div class="code">${state.roomCode||''}</div></div>
-      <div class="room-slot"><span class="avatar frame-${state.profile.frame}">${state.profile.avatar}</span> ${state.profile.name||'شما'} (میزبان)</div>
-      <div class="room-slot ${joined?'':'empty'}">${joined?'🟢 دوست شما وصل شد':'⏳ در انتظار پیوستن دوست...'}</div>
-      <button class="btn" style="margin-top:18px;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="leave-room">خروج از اتاق</button>
-      <div class="lobby-note">این کد رو برای دوستت بفرست؛ اون باید توی «پیوستن با کد» همین کد رو وارد کنه (هر دو باید به همین سرور وصل باشید).</div>
+      ${rows}
+      ${hostControls}
+      <button class="btn" style="margin-top:18px;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="leave-room">${t('leave_room_btn','خروج از اتاق')}</button>
+      <div class="lobby-note">${t('room_wait_note','این کد رو برای تا ۳ نفر از دوستات بفرست؛ هر کدوم توی «پیوستن با کد» همین کد رو وارد کنن (همه باید به همین سرور وصل باشید). با پر شدن هر ۴ صندلی بازی خودکار شروع می‌شه، یا می‌تونی زودتر با ربات برای بقیه صندلی‌ها شروع کنی.')}</div>
     </div>`;
 }
 
@@ -954,7 +1097,7 @@ function render(){
   app.dataset.table = state.table;
   document.body.dataset.bg = state.profile.background;
 
-  if(state.screen==='login'){ renderLogin(app); return; }
+  if(state.screen==='login'){ renderLogin(app); renderGoogleButton(); return; }
   if(state.screen==='lobby'){ renderLobby(app); return; }
   if(state.screen==='matchmaking'){ renderMatchmaking(app); return; }
   if(state.screen==='room-wait'){ renderRoomWait(app); return; }
@@ -965,15 +1108,15 @@ function render(){
     overlay = settingsHTML();
   } else if(!state.phase){
     overlay = `<div class="overlay"><div class="card-box">
-      <h2>در حال آماده‌سازی بازی...</h2>
-      <p>چند لحظه صبر کن تا کارت‌ها پخش بشه.</p>
+      <h2>${t('preparing_title','در حال آماده‌سازی بازی...')}</h2>
+      <p>${t('preparing_desc','چند لحظه صبر کن تا کارت‌ها پخش بشه.')}</p>
     </div></div>`;
   } else if(state.phase==='choosing-trump' && state.hakem===state.mySeat){
     const counts={};
     (state.hand||[]).forEach(c=>counts[c.suit]=(counts[c.suit]||0)+1);
     overlay = `<div class="overlay"><div class="card-box">
-      <h2>شما حاکم هستید!</h2>
-      <p>یکی از این ۵ کارت رو دارید. یک خال رو به عنوان «حکم» انتخاب کنید:</p>
+      <h2>${t('hakem_title','شما حاکم هستید!')}</h2>
+      <p>${t('hakem_desc','یکی از این ۵ کارت رو دارید. یک خال رو به عنوان «حکم» انتخاب کنید:')}</p>
       <div class="my5">${(state.hand||[]).map(c=>cardHTML(c)).join('')}</div>
       <div class="suit-grid">
         ${SUIT_ORDER.map(s=>`<div class="suit-btn" data-choose-trump="${s}">
@@ -984,35 +1127,35 @@ function render(){
     </div></div>`;
   } else if(state.phase==='choosing-trump'){
     overlay = `<div class="overlay"><div class="card-box">
-      <h2>انتخاب حکم</h2>
-      <p>${state.seatNames[state.hakem]||''} حاکم این دست است و در حال انتخاب خال حکم است...</p>
+      <h2>${t('choosing_trump_title','انتخاب حکم')}</h2>
+      <p>${t('choosing_trump_desc','{name} حاکم این دست است و در حال انتخاب خال حکم است...').replace('{name}', state.seatNames[state.hakem]||'')}</p>
     </div></div>`;
   } else if(state.phase==='hand-end'){
-    const t = state.handWinnerTeam;
+    const winnerTeam = state.handWinnerTeam;
     overlay = `<div class="overlay"><div class="card-box">
-      <h2>${t==='A'?'دست به تیم شما رسید! 🎉':'این دست رو حریف برد'}</h2>
-      <p>نتیجه‌ی این دست: ${state.tricksWon.A} - ${state.tricksWon.B} (تیک)<br>
-      امتیاز مسابقه: تیم شما ${state.roundsWon.A} — حریف ${state.roundsWon.B}</p>
-      <button class="btn" data-action="next-hand">دست بعدی</button>
+      <h2>${winnerTeam==='A'?t('hand_won_title','دست به تیم شما رسید! 🎉'):t('hand_lost_title','این دست رو حریف برد')}</h2>
+      <p>${t('hand_result_line','نتیجه‌ی این دست: {a} - {b} (تیک)').replace('{a}',state.tricksWon.A).replace('{b}',state.tricksWon.B)}<br>
+      ${t('match_score_line','امتیاز مسابقه: تیم شما {a} — حریف {b}').replace('{a}',state.roundsWon.A).replace('{b}',state.roundsWon.B)}</p>
+      <button class="btn" data-action="next-hand">${t('next_hand_btn','دست بعدی')}</button>
     </div></div>`;
   } else if(state.phase==='match-end'){
-    const t = state.matchWinnerTeam;
+    const winnerTeam = state.matchWinnerTeam;
     overlay = `<div class="overlay"><div class="card-box">
-      <h2>${t==='A'?'برنده شدید! 🏆':'مسابقه رو باختید'}</h2>
-      <p>نتیجه‌ی نهایی: تیم شما ${state.roundsWon.A} دست — حریف ${state.roundsWon.B} دست</p>
+      <h2>${winnerTeam==='A'?t('match_won_title','برنده شدید! 🏆'):t('match_lost_title','مسابقه رو باختید')}</h2>
+      <p>${t('final_result_line','نتیجه‌ی نهایی: تیم شما {a} دست — حریف {b} دست').replace('{a}',state.roundsWon.A).replace('{b}',state.roundsWon.B)}</p>
       ${rankChangeHTML()}
-      <button class="btn" data-action="new-match">مسابقه‌ی جدید</button>
+      <button class="btn" data-action="new-match">${t('new_match_btn','مسابقه‌ی جدید')}</button>
     </div></div>`;
   }
 
   app.innerHTML = `
-    ${state.reconnecting?`<div class="reconnect-banner">📡 اتصال قطع شد — در حال تلاش برای اتصال مجدد...</div>`:''}
+    ${state.reconnecting?`<div class="reconnect-banner">${t('reconnect_banner','📡 اتصال قطع شد — در حال تلاش برای اتصال مجدد...')}</div>`:''}
     <div class="topbar">
-      <div class="brand"><b>حکم</b><span>فاز ۴ — آنلاین (سرور واقعی)</span></div>
+      <div class="brand"><b>حکم</b><span>${t('topbar_subtitle','فاز ۴ — آنلاین (سرور واقعی)')}</span></div>
       <div class="topbar-actions">
         <div class="ping-badge ${typeof state.ping==='number'&&state.ping>150?'bad':''}"><span class="dot2"></span>${state.ping}</div>
-        <div class="score-pill"><span class="a">تیم شما ${state.roundsWon.A}</span><span class="sep">–</span><span class="b">${state.roundsWon.B} حریف</span></div>
-        <div class="icon-btn" data-action="open-settings" title="پوسته و میز">⚙</div>
+        <div class="score-pill"><span class="a">${t('your_team','تیم شما')} ${state.roundsWon.A}</span><span class="sep">–</span><span class="b">${state.roundsWon.B} ${t('opponent','حریف')}</span></div>
+        <div class="icon-btn" data-action="open-settings" title="${t('tab_theme','پوسته و میز')}">⚙</div>
       </div>
     </div>
     <div class="table-wrap">
@@ -1024,7 +1167,7 @@ function render(){
       <div class="particle-layer"></div>
     </div>
     <div class="hand">${handHTML()}</div>
-    <div class="footnote">تیک‌های این دست — تیم شما: ${state.tricksWon.A} &nbsp;|&nbsp; حریف: ${state.tricksWon.B}<br>فاز ۴: ورود مهمان، اتاق خصوصی و بازی سریع روی سرور واقعی با WebSocket، پینگ واقعی و reconnect خودکار. سیستم رتبه‌بندی واقعی و اقتصاد بازی در فازهای بعدی.</div>
+    <div class="footnote">${t('footnote_tricks','تیک‌های این دست — تیم شما: {a} \u00a0|\u00a0 حریف: {b}').replace('{a}',state.tricksWon.A).replace('{b}',state.tricksWon.B)}<br>${t('footnote_note','فاز ۴: ورود مهمان، اتاق خصوصی و بازی سریع روی سرور واقعی با WebSocket، پینگ واقعی و reconnect خودکار. سیستم رتبه‌بندی واقعی و اقتصاد بازی در فازهای بعدی.')}</div>
     ${overlay}
     ${state.toast?`<div class="toast">${state.toast}</div>`:''}
   `;
@@ -1046,6 +1189,8 @@ document.getElementById('app').addEventListener('click', (e)=>{
   if(cancelMmBtn){ cancelMatchmaking(); return; }
   const leaveRoomBtn = e.target.closest('[data-action="leave-room"]');
   if(leaveRoomBtn){ leaveRoom(); return; }
+  const startWithBotsBtn = e.target.closest('[data-action="start-with-bots"]');
+  if(startWithBotsBtn){ sendMsg({type:'start_with_bots'}); return; }
   const disconnectBtn = e.target.closest('[data-action="simulate-disconnect"]');
   if(disconnectBtn){ simulateDisconnect(); return; }
   const openSettings = e.target.closest('[data-action="open-settings"]');
@@ -1058,6 +1203,8 @@ document.getElementById('app').addEventListener('click', (e)=>{
   if(tableSwatch){ state.table = tableSwatch.dataset.setTable; render(); return; }
   const tabBtn = e.target.closest('[data-set-tab]');
   if(tabBtn){ state.settingsTab = tabBtn.dataset.setTab; render(); return; }
+  const langSwatch = e.target.closest('[data-set-lang]');
+  if(langSwatch){ sendMsg({type:'set_language', lang: langSwatch.dataset.setLang}); return; }
   const avatarSwatch = e.target.closest('[data-set-avatar]');
   if(avatarSwatch){ state.profile.avatar = avatarSwatch.dataset.setAvatar; render(); return; }
   const frameSwatch = e.target.closest('[data-set-frame]');
@@ -1140,5 +1287,9 @@ render();
 <script src="economy-panel.js"></script>
 <script src="social-panel.js"></script>
 <script src="tournament-panel.js"></script>
+<script src="monetization-panel.js"></script>
+<script src="stats-panel.js"></script>
+<script src="worldcup-panel.js"></script>
+<script src="achievements-panel.js"></script>
 </body>
 </html>

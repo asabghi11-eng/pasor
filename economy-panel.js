@@ -189,29 +189,29 @@
           this._renderAll();
           if (msg.reason === "match_end") {
             const r = msg.reward || {};
-            let text = `پاداش بازی: ${r.coins || 0} سکه`;
-            if (r.gems) text += `، ${r.gems} جم`;
-            if (msg.leveledUp) text += " — لول‌آپ شدی! 🎉";
+            let text = t('eco_match_reward','پاداش بازی: {coins} سکه').replace('{coins}', r.coins || 0);
+            if (r.gems) text += t('eco_gems_suffix','، {gems} جم').replace('{gems}', r.gems);
+            if (msg.leveledUp) text += t('eco_leveled_up',' — لول‌آپ شدی! 🎉');
             this._toast(text);
           }
           break;
         case "claim_mission_result":
-          if (!msg.ok) this._toast(msg.error || "خطا در دریافت جایزه");
+          if (!msg.ok) this._toast(msg.error || t('eco_claim_error','خطا در دریافت جایزه'));
           break;
         case "spin_wheel_result":
           this._handleWheelResult(msg);
           break;
         case "buy_item_result":
-          this._toast(msg.ok ? `خریداری شد: ${msg.item.name}` : (msg.error || "خطا در خرید"));
+          this._toast(msg.ok ? t('eco_bought','خریداری شد: {name}').replace('{name}', msg.item.name) : (msg.error || t('eco_buy_error','خطا در خرید')));
           break;
         case "open_box_result":
           if (msg.ok) {
             const r = msg.reward;
-            let text = `از جعبه گرفتی: ${r.coins} سکه`;
-            if (r.gems) text += ` + ${r.gems} جم`;
+            let text = t('eco_box_reward','از جعبه گرفتی: {coins} سکه').replace('{coins}', r.coins);
+            if (r.gems) text += t('eco_box_reward_gems',' + {gems} جم').replace('{gems}', r.gems);
             this._toast(text);
           } else {
-            this._toast(msg.error || "خطا در باز کردن جعبه");
+            this._toast(msg.error || t('eco_box_error','خطا در باز کردن جعبه'));
           }
           break;
       }
@@ -237,23 +237,23 @@
       const modal = el("div", "hke-modal");
       modal.innerHTML = `
         <div class="hke-head">
-          <h2>💰 اقتصاد بازی</h2>
+          <h2>💰 ${t('eco_title','اقتصاد بازی')}</h2>
           <button class="hke-close" type="button">×</button>
         </div>
         <div class="hke-wallet-row">
-          <span>🪙 <b data-w-coins>0</b> سکه</span>
-          <span>💎 <b data-w-gems>0</b> جم</span>
-          <span>⭐ لول <b data-w-level>1</b></span>
+          <span>🪙 <b data-w-coins>0</b> ${t('eco_coins_label','سکه')}</span>
+          <span>💎 <b data-w-gems>0</b> ${t('eco_gems_label','جم')}</span>
+          <span>⭐ ${t('eco_level_label','لول')} <b data-w-level>1</b></span>
         </div>
         <div class="hke-xpbar-wrap">
           <div class="hke-xpbar"><div data-xp-fill style="width:0%"></div></div>
           <div class="hke-xptext" data-xp-text></div>
         </div>
         <div class="hke-tabs">
-          <button class="hke-tab hke-active" data-tab="missions">ماموریت‌ها</button>
-          <button class="hke-tab" data-tab="shop">فروشگاه</button>
-          <button class="hke-tab" data-tab="wheel">گردونه شانس</button>
-          <button class="hke-tab" data-tab="boxes">جعبه‌ها</button>
+          <button class="hke-tab hke-active" data-tab="missions">${t('eco_tab_missions','ماموریت‌ها')}</button>
+          <button class="hke-tab" data-tab="shop">${t('eco_tab_shop','فروشگاه')}</button>
+          <button class="hke-tab" data-tab="wheel">${t('eco_tab_wheel','گردونه شانس')}</button>
+          <button class="hke-tab" data-tab="boxes">${t('eco_tab_boxes','جعبه‌ها')}</button>
         </div>
         <div class="hke-body">
           <div class="hke-panel hke-active" data-panel="missions"></div>
@@ -314,14 +314,14 @@
       const need = 100 + (this.wallet.level - 1) * 40;
       const pct = Math.min(100, Math.round((this.wallet.xp / need) * 100));
       this.modal.querySelector("[data-xp-fill]").style.width = pct + "%";
-      this.modal.querySelector("[data-xp-text]").textContent = `${this.wallet.xp} / ${need} XP تا لول بعد`;
+      this.modal.querySelector("[data-xp-text]").textContent = t('eco_xp_to_next','{xp} / {need} XP تا لول بعد').replace('{xp}', this.wallet.xp).replace('{need}', need);
     }
 
     _renderMissions() {
       const panel = this.modal.querySelector('[data-panel="missions"]');
       panel.innerHTML = "";
       if (!this.missions.length) {
-        panel.appendChild(el("div", null, "ماموریتی برای امروز نیست."));
+        panel.appendChild(el("div", null, t('eco_no_missions','ماموریتی برای امروز نیست.')));
         return;
       }
       this.missions.forEach((m) => {
@@ -333,7 +333,7 @@
           <div class="hke-mission-bottom">
             <span>🪙 ${m.rewardCoins} + ⭐ ${m.rewardXp}xp</span>
             <button class="hke-btn" ${m.claimed || m.progress < m.target ? "disabled" : ""} data-mission="${m.id}">
-              ${m.claimed ? "دریافت شد" : "دریافت جایزه"}
+              ${m.claimed ? t('eco_mission_claimed','دریافت شد') : t('eco_mission_claim','دریافت جایزه')}
             </button>
           </div>
         `;
@@ -356,7 +356,7 @@
           <div class="hke-item-name">${item.name}</div>
           <div class="hke-item-price">${icon} ${item.price}</div>
           <button class="hke-btn ${owned ? "hke-ghost" : ""}" ${owned ? "disabled" : ""} data-item="${item.id}">
-            ${owned ? "خریداری شده" : "خرید"}
+            ${owned ? t('eco_owned','خریداری شده') : t('eco_buy','خرید')}
           </button>
         `;
         card.querySelector("button").addEventListener("click", () => {
@@ -379,7 +379,7 @@
           <div class="hke-wheel" data-wheel style="background: conic-gradient(${gradient})"></div>
         </div>
         <button class="hke-btn" data-spin ${this.canSpinWheel ? "" : "disabled"}>
-          ${this.canSpinWheel ? "بچرخون! (رایگان، یک بار در روز)" : "امروز چرخوندی — فردا بیا"}
+          ${this.canSpinWheel ? t('eco_spin_free','بچرخون! (رایگان، یک بار در روز)') : t('eco_spin_done','امروز چرخوندی — فردا بیا')}
         </button>
         <div class="hke-wheel-result" data-wheel-result></div>
       `;
@@ -393,7 +393,7 @@
 
     _handleWheelResult(msg) {
       if (!msg.ok) {
-        this._toast(msg.error || "نمیشه چرخوند");
+        this._toast(msg.error || t('eco_cant_spin','نمیشه چرخوند'));
         return;
       }
       if (this._wheelEl) {
@@ -402,19 +402,19 @@
         this._wheelEl.style.transform = `rotate(${target}deg)`;
       }
       if (this._wheelResultEl) {
-        this._wheelResultEl.textContent = `بردی: ${msg.label} 🎉`;
+        this._wheelResultEl.textContent = t('eco_won_prize','بردی: {label} 🎉').replace('{label}', msg.label);
       }
       this.canSpinWheel = false;
-      this._toast(`جایزه گردونه: ${msg.label}`);
+      this._toast(t('eco_wheel_prize_toast','جایزه گردونه: {label}').replace('{label}', msg.label));
     }
 
     _renderBoxes() {
       const panel = this.modal.querySelector('[data-panel="boxes"]');
       panel.innerHTML = "";
       const boxes = [
-        { key: "bronze", icon: "📦", name: "جعبه برنزی", cost: 10 },
-        { key: "silver", icon: "🎁", name: "جعبه نقره‌ای", cost: 25 },
-        { key: "gold", icon: "🏆", name: "جعبه طلایی", cost: 60 },
+        { key: "bronze", icon: "📦", name: t('eco_box_bronze','جعبه برنزی'), cost: 10 },
+        { key: "silver", icon: "🎁", name: t('eco_box_silver','جعبه نقره‌ای'), cost: 25 },
+        { key: "gold", icon: "🏆", name: t('eco_box_gold','جعبه طلایی'), cost: 60 },
       ];
       const row = el("div", "hke-boxes");
       boxes.forEach((b) => {

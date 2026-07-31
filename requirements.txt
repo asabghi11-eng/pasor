@@ -1,3 +1,7 @@
 fastapi
 uvicorn[standard]
 websockets
+requests
+google-auth
+PyJWT
+psycopg2-binary  # only needed if you set DATABASE_URL (PostgreSQL); SQLite needs nothing extra

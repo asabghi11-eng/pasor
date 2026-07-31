@@ -73,6 +73,8 @@
   .hks-chat-log { height: 220px; overflow-y: auto; background: #0a1015; border-radius: 10px; padding: 8px; margin-bottom: 8px; font-size: 13px; }
   .hks-chat-line { margin-bottom: 6px; }
   .hks-chat-line b { color: #4d9dca; }
+  .hks-report-btn { cursor: pointer; margin-right: 6px; opacity: .5; font-size: 12px; }
+  .hks-report-btn:hover { opacity: 1; }
   .hks-chat-row { display: flex; gap: 6px; }
   .hks-chat-row input { flex: 1; border-radius: 8px; border: 1px solid #1c2e3d; background: #0a1015; color: #d9f0ff; padding: 8px; font-family: inherit; }
   .hks-chat-row button { border: none; border-radius: 8px; background: #4d9dca; color: #06232f; font-weight: 700; padding: 8px 12px; cursor: pointer; }
@@ -103,7 +105,12 @@
   .hks-toast.hks-show { opacity: 1; transform: translateY(0); }
   `;
 
-  const QUICK_CHAT_PHRASES = ["دمت گرم!", "آفرین :)", "بد شانسی!", "حکم خوبی بود", "دوباره بازی می‌کنیم؟", "خیلی خوب بود!"];
+  function quickChatPhrases() {
+    return [
+      t('soc_qc_0','دمت گرم!'), t('soc_qc_1','آفرین :)'), t('soc_qc_2','بد شانسی!'),
+      t('soc_qc_3','حکم خوبی بود'), t('soc_qc_4','دوباره بازی می‌کنیم؟'), t('soc_qc_5','خیلی خوب بود!'),
+    ];
+  }
   const EMOJIS = ["👍", "😂", "😮", "😢", "🔥", "🎉", "🤝", "😅"];
 
   function injectStyle() {
@@ -166,7 +173,7 @@
           this._renderFriends();
           break;
         case "friend_added":
-          this._toast(`${msg.name} به لیست دوستانت اضافه شد`);
+          this._toast(t('soc_friend_added','{name} به لیست دوستانت اضافه شد').replace('{name}', msg.name));
           this._send({ type: "get_friends" });
           break;
         case "clan_state":
@@ -177,12 +184,21 @@
           this._toast(msg.message);
           break;
         case "gift_sent":
-          this._toast(`${msg.amount} سکه به ${msg.name} هدیه دادی`);
+          this._toast(t('soc_gift_sent','{amount} سکه به {name} هدیه دادی').replace('{amount}', msg.amount).replace('{name}', msg.name));
           break;
         case "gift_received":
-          this._toast(`${msg.name} به تو ${msg.amount} سکه هدیه داد! 🎁`);
+          this._toast(t('soc_gift_received','{name} به تو {amount} سکه هدیه داد! 🎁').replace('{name}', msg.name).replace('{amount}', msg.amount));
           break;
         case "gift_error":
+          this._toast(msg.message);
+          break;
+        case "muted":
+          this._toast(msg.reason || t('soc_muted','چت تو موقتاً محدود شده'));
+          break;
+        case "report_sent":
+          this._toast(t('soc_report_sent','گزارش ثبت شد، ممنون از کمکت'));
+          break;
+        case "report_error":
           this._toast(msg.message);
           break;
       }
@@ -197,7 +213,7 @@
       injectStyle();
 
       this.fab = el("div", "hks-fab");
-      this.fab.innerHTML = `💬 چت و دوستان <span class="hks-badge" data-badge></span>`;
+      this.fab.innerHTML = `💬 ${t('soc_fab_label','چت و دوستان')} <span class="hks-badge" data-badge></span>`;
       this.badge = this.fab.querySelector("[data-badge]");
       this.fab.addEventListener("click", () => this.open());
       document.body.appendChild(this.fab);
@@ -208,14 +224,14 @@
       const modal = el("div", "hks-modal");
       modal.innerHTML = `
         <div class="hks-head">
-          <h2>👥 اجتماعی</h2>
+          <h2>👥 ${t('soc_title','اجتماعی')}</h2>
           <button class="hks-close" type="button">×</button>
         </div>
         <div class="hks-tabs">
-          <button class="hks-tab hks-active" data-tab="chat">چت</button>
-          <button class="hks-tab" data-tab="friends">دوستان</button>
-          <button class="hks-tab" data-tab="clan">باشگاه</button>
-          <button class="hks-tab" data-tab="gift">هدیه</button>
+          <button class="hks-tab hks-active" data-tab="chat">${t('soc_tab_chat','چت')}</button>
+          <button class="hks-tab" data-tab="friends">${t('soc_tab_friends','دوستان')}</button>
+          <button class="hks-tab" data-tab="clan">${t('soc_tab_clan','باشگاه')}</button>
+          <button class="hks-tab" data-tab="gift">${t('soc_tab_gift','هدیه')}</button>
         </div>
         <div class="hks-body">
           <div class="hks-panel hks-active" data-panel="chat"></div>
@@ -266,7 +282,7 @@
     _renderChat() {
       const panel = this.modal.querySelector('[data-panel="chat"]');
       if (!this.inRoom) {
-        panel.innerHTML = `<div class="hks-note">چت و ایموجی فقط داخل یک بازی فعال هستن — اول یک بازی شروع کن.</div>`;
+        panel.innerHTML = `<div class="hks-note">${t('soc_chat_unavailable','چت و ایموجی فقط داخل یک بازی فعال هستن — اول یک بازی شروع کن.')}</div>`;
         return;
       }
       panel.innerHTML = "";
@@ -276,13 +292,21 @@
         line.innerHTML = c.kind === "emoji"
           ? `<b>${c.from}:</b> ${c.emoji}`
           : `<b>${c.from}:</b> ${c.text}`;
+        if (c.playerId && c.playerId !== this.myPlayerId) {
+          const reportBtn = el("span", "hks-report-btn", "🚩");
+          reportBtn.title = t('soc_report_title','گزارش این بازیکن');
+          reportBtn.addEventListener("click", () => {
+            this._send({ type: "report_player", playerId: c.playerId, reason: "abusive_chat" });
+          });
+          line.appendChild(reportBtn);
+        }
         log.appendChild(line);
       });
       panel.appendChild(log);
       log.scrollTop = log.scrollHeight;
 
       const quickRow = el("div", "hks-quick-row");
-      QUICK_CHAT_PHRASES.forEach((phrase, idx) => {
+      quickChatPhrases().forEach((phrase, idx) => {
         const s = el("span", null, phrase);
         s.addEventListener("click", () => this._send({ type: "quick_chat", phraseIndex: idx }));
         quickRow.appendChild(s);
@@ -300,9 +324,9 @@
       const row = el("div", "hks-chat-row");
       const input = el("input");
       input.type = "text";
-      input.placeholder = "پیام بنویس...";
+      input.placeholder = t('soc_msg_placeholder','پیام بنویس...');
       input.maxLength = 200;
-      const btn = el("button", null, "ارسال");
+      const btn = el("button", null, t('soc_send_btn','ارسال'));
       const sendText = () => {
         const text = input.value.trim();
         if (!text) return;
@@ -323,8 +347,8 @@
       const addRow = el("div", "hks-field");
       const input = el("input");
       input.type = "text";
-      input.placeholder = "آی‌دی بازیکن (playerId)";
-      const btn = el("button", null, "افزودن");
+      input.placeholder = t('soc_playerid_placeholder','آی‌دی بازیکن (playerId)');
+      const btn = el("button", null, t('soc_add_btn','افزودن'));
       btn.addEventListener("click", () => {
         const id = input.value.trim();
         if (id) { this._send({ type: "add_friend", playerId: id }); input.value = ""; }
@@ -334,13 +358,13 @@
       panel.appendChild(addRow);
 
       if (this.myPlayerId) {
-        const mine = el("div", "hks-note", `آی‌دی خودت (برای اشتراک با دوستت): <span style="font-family:monospace;color:#4d9dca">${this.myPlayerId}</span>`);
+        const mine = el("div", "hks-note", t('soc_your_id','آی‌دی خودت (برای اشتراک با دوستت):') + ` <span style="font-family:monospace;color:#4d9dca">${this.myPlayerId}</span>`);
         mine.style.padding = "0 0 10px";
         panel.appendChild(mine);
       }
 
       if (!this.friends.length) {
-        panel.appendChild(el("div", "hks-note", "هنوز دوستی اضافه نکردی."));
+        panel.appendChild(el("div", "hks-note", t('soc_no_friends','هنوز دوستی اضافه نکردی.')));
         return;
       }
       this.friends.forEach((f) => {
@@ -360,8 +384,8 @@
         const createRow = el("div", "hks-field");
         const nameInput = el("input");
         nameInput.type = "text";
-        nameInput.placeholder = "نام باشگاه جدید";
-        const createBtn = el("button", null, "ساخت");
+        nameInput.placeholder = t('soc_clan_name_placeholder','نام باشگاه جدید');
+        const createBtn = el("button", null, t('soc_create_btn','ساخت'));
         createBtn.addEventListener("click", () => {
           const name = nameInput.value.trim();
           if (name) this._send({ type: "create_clan", name });
@@ -373,8 +397,8 @@
         const joinRow = el("div", "hks-field");
         const codeInput = el("input");
         codeInput.type = "text";
-        codeInput.placeholder = "کد باشگاه دوستت";
-        const joinBtn = el("button", null, "پیوستن");
+        codeInput.placeholder = t('soc_clan_code_placeholder','کد باشگاه دوستت');
+        const joinBtn = el("button", null, t('soc_join_btn','پیوستن'));
         joinBtn.addEventListener("click", () => {
           const code = codeInput.value.trim();
           if (code) this._send({ type: "join_clan", code });
@@ -387,8 +411,8 @@
 
       const card = el("div", "hks-clan-card");
       card.innerHTML = `
-        <div style="font-size:15px;font-weight:700;margin-bottom:4px;">${this.clan.name} — لول ${this.clan.level}</div>
-        <div style="font-size:12px;color:#8ba9bd;margin-bottom:6px;">کد دعوت: <span class="hks-code">${this.clan.code}</span></div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px;">${this.clan.name} — ${t('soc_clan_level','لول')} ${this.clan.level}</div>
+        <div style="font-size:12px;color:#8ba9bd;margin-bottom:6px;">${t('soc_invite_code','کد دعوت:')} <span class="hks-code">${this.clan.code}</span></div>
         <div style="font-size:12px;">XP: ${this.clan.xp} / ${this.clan.xpNeeded}</div>
       `;
       panel.appendChild(card);
@@ -399,7 +423,7 @@
         panel.appendChild(item);
       });
 
-      const leaveBtn = el("button", null, "خروج از باشگاه");
+      const leaveBtn = el("button", null, t('soc_leave_clan','خروج از باشگاه'));
       leaveBtn.style.cssText = "margin-top:10px;border:none;border-radius:8px;background:#e2574c;color:#fff;padding:8px 12px;cursor:pointer;width:100%;";
       leaveBtn.addEventListener("click", () => this._send({ type: "leave_clan" }));
       panel.appendChild(leaveBtn);
@@ -407,10 +431,10 @@
 
     _renderGift() {
       const panel = this.modal.querySelector('[data-panel="gift"]');
-      panel.innerHTML = `<div class="hks-note" style="padding-bottom:10px;">فقط به دوستانت (که آنلاین هستن) میشه هدیه داد — روزی یک بار.</div>`;
+      panel.innerHTML = `<div class="hks-note" style="padding-bottom:10px;">${t('soc_gift_note','فقط به دوستانت (که آنلاین هستن) میشه هدیه داد — روزی یک بار.')}</div>`;
 
       if (!this.friends.length) {
-        panel.appendChild(el("div", "hks-note", "اول یک دوست اضافه کن."));
+        panel.appendChild(el("div", "hks-note", t('soc_add_friend_first','اول یک دوست اضافه کن.')));
         return;
       }
       this.friends.forEach((f) => {
@@ -419,7 +443,7 @@
         amountInput.type = "number";
         amountInput.min = "10"; amountInput.max = "200"; amountInput.value = "50";
         amountInput.style.cssText = "width:60px;border-radius:6px;border:1px solid #1c2e3d;background:#0a1015;color:#d9f0ff;padding:4px;";
-        const sendBtn = el("button", null, "🎁 هدیه");
+        const sendBtn = el("button", null, '🎁 ' + t('soc_gift_btn','هدیه'));
         sendBtn.addEventListener("click", () => {
           this._send({ type: "send_gift", playerId: f.playerId, amount: parseInt(amountInput.value, 10) || 50 });
         });

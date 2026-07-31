@@ -135,10 +135,12 @@
           this._toast(msg.message);
           break;
         case "tournament_eliminated":
-          this._toast("متأسفانه از تورنمنت حذف شدی — دفعه بعد بهتر میشه!");
+          this._toast(t('trn_eliminated','متأسفانه از تورنمنت حذف شدی — دفعه بعد بهتر میشه!'));
           break;
         case "tournament_finished":
-          this._toast(`تورنمنت تموم شد — مقام ${msg.place} 🏆 (+${msg.prize.coins} سکه${msg.prize.gems ? `، +${msg.prize.gems} جم` : ""})`);
+          let prizeText = t('trn_prize_coins','+{coins} سکه').replace('{coins}', msg.prize.coins);
+          if (msg.prize.gems) prizeText += t('trn_prize_gems','، +{gems} جم').replace('{gems}', msg.prize.gems);
+          this._toast(t('trn_finished','تورنمنت تموم شد — مقام {place} 🏆 ({prize})').replace('{place}', msg.place).replace('{prize}', prizeText));
           this._send({ type: "list_tournaments" });
           break;
         case "leaderboard":
@@ -151,7 +153,7 @@
     _build() {
       injectStyle();
 
-      this.fab = el("div", "hkt-fab", "🏆 تورنمنت");
+      this.fab = el("div", "hkt-fab", "🏆 " + t('trn_fab_label','تورنمنت'));
       this.fab.addEventListener("click", () => this.open());
       document.body.appendChild(this.fab);
 
@@ -161,13 +163,13 @@
       const modal = el("div", "hkt-modal");
       modal.innerHTML = `
         <div class="hkt-head">
-          <h2>🏆 تورنمنت‌ها و لیدربورد</h2>
+          <h2>🏆 ${t('trn_title','تورنمنت‌ها و لیدربورد')}</h2>
           <button class="hkt-close" type="button">×</button>
         </div>
         <div class="hkt-tabs">
-          <button class="hkt-tab hkt-active" data-tab="current">تورنمنت من</button>
-          <button class="hkt-tab" data-tab="browse">لیست / ساخت</button>
-          <button class="hkt-tab" data-tab="leaderboard">لیدربورد جهانی</button>
+          <button class="hkt-tab hkt-active" data-tab="current">${t('trn_tab_current','تورنمنت من')}</button>
+          <button class="hkt-tab" data-tab="browse">${t('trn_tab_browse','لیست / ساخت')}</button>
+          <button class="hkt-tab" data-tab="leaderboard">${t('trn_tab_leaderboard','لیدربورد جهانی')}</button>
         </div>
         <div class="hkt-body">
           <div class="hkt-panel hkt-active" data-panel="current"></div>
@@ -209,35 +211,36 @@
       const panel = this.modal.querySelector('[data-panel="current"]');
       panel.innerHTML = "";
       if (!this.current) {
-        panel.appendChild(el("div", "hkt-note", "توی هیچ تورنمنتی نیستی — از تب «لیست / ساخت» یکی بساز یا بهش بپیوند."));
+        panel.appendChild(el("div", "hkt-note", t('trn_none','توی هیچ تورنمنتی نیستی — از تب «لیست / ساخت» یکی بساز یا بهش بپیوند.')));
         return;
       }
-      const t = this.current;
+      const cur = this.current;
       const card = el("div", "hkt-card");
-      const statusFa = { registration: "در حال ثبت‌نام", active: "در حال برگزاری", finished: "تمام‌شده" }[t.status] || t.status;
-      const modeFa = t.mode === "knockout" ? "حذفی" : "لیگ";
+      const statusMap = { registration: t('trn_status_registration','در حال ثبت‌نام'), active: t('trn_status_active','در حال برگزاری'), finished: t('trn_status_finished','تمام‌شده') };
+      const statusFa = statusMap[cur.status] || cur.status;
+      const modeFa = cur.mode === "knockout" ? t('trn_mode_knockout','حذفی') : t('trn_mode_league','لیگ');
       card.innerHTML = `
-        <div class="hkt-name">${t.name}</div>
-        <div class="hkt-meta">${modeFa} · ظرفیت ${t.size} · ${statusFa}</div>
+        <div class="hkt-name">${cur.name}</div>
+        <div class="hkt-meta">${modeFa} · ${t('trn_capacity','ظرفیت')} ${cur.size} · ${statusFa}</div>
       `;
       panel.appendChild(card);
 
-      if (t.status === "registration" && t.ownerId === this.myPlayerId) {
-        const startBtn = el("button", null, "شروع دستی تورنمنت");
-        startBtn.addEventListener("click", () => this._send({ type: "start_tournament", tournamentId: t.id }));
+      if (cur.status === "registration" && cur.ownerId === this.myPlayerId) {
+        const startBtn = el("button", null, t('trn_start_btn','شروع دستی تورنمنت'));
+        startBtn.addEventListener("click", () => this._send({ type: "start_tournament", tournamentId: cur.id }));
         panel.appendChild(startBtn);
       }
-      if (t.status === "registration") {
-        const leaveBtn = el("button", null, "انصراف از ثبت‌نام");
+      if (cur.status === "registration") {
+        const leaveBtn = el("button", null, t('trn_withdraw_btn','انصراف از ثبت‌نام'));
         leaveBtn.style.background = "#6b3a44";
         leaveBtn.addEventListener("click", () => this._send({ type: "leave_tournament" }));
         panel.appendChild(leaveBtn);
       }
 
-      (t.standings || []).forEach((s, i) => {
+      (cur.standings || []).forEach((s, i) => {
         const row = el("div", "hkt-row" + (s.playerId === this.myPlayerId ? " hkt-me" : ""));
         const nameHtml = s.eliminated ? `<span class="hkt-out">${s.name}</span>` : s.name;
-        row.innerHTML = `<span><span class="hkt-rank">${i + 1}.</span>${nameHtml}</span><span>${s.points} امتیاز (${s.wins}ب/${s.losses}ش)</span>`;
+        row.innerHTML = `<span><span class="hkt-rank">${i + 1}.</span>${nameHtml}</span><span>${t('trn_points_wl','{points} امتیاز ({w}ب/{l}ش)').replace('{points}', s.points).replace('{w}', s.wins).replace('{l}', s.losses)}</span>`;
         panel.appendChild(row);
       });
     }
@@ -248,19 +251,19 @@
 
       const field = el("div", "hkt-field");
       field.innerHTML = `
-        <input type="text" placeholder="نام تورنمنت جدید" data-name />
+        <input type="text" placeholder="${t('trn_new_name_placeholder','نام تورنمنت جدید')}" data-name />
         <select data-size>
-          <option value="4">۴ نفره</option>
-          <option value="8">۸ نفره</option>
-          <option value="16">۱۶ نفره</option>
-          <option value="32">۳۲ نفره</option>
+          <option value="4">${t('trn_size_4','۴ نفره')}</option>
+          <option value="8">${t('trn_size_8','۸ نفره')}</option>
+          <option value="16">${t('trn_size_16','۱۶ نفره')}</option>
+          <option value="32">${t('trn_size_32','۳۲ نفره')}</option>
         </select>
         <select data-mode>
-          <option value="league">لیگ (امتیازی)</option>
-          <option value="knockout">حذفی</option>
+          <option value="league">${t('trn_mode_league_option','لیگ (امتیازی)')}</option>
+          <option value="knockout">${t('trn_mode_knockout','حذفی')}</option>
         </select>
       `;
-      const createBtn = el("button", null, "ساخت تورنمنت");
+      const createBtn = el("button", null, t('trn_create_btn','ساخت تورنمنت'));
       createBtn.addEventListener("click", () => {
         const name = field.querySelector("[data-name]").value.trim();
         const size = parseInt(field.querySelector("[data-size]").value, 10);
@@ -271,15 +274,15 @@
       panel.appendChild(field);
 
       if (!this.openList.length) {
-        panel.appendChild(el("div", "hkt-note", "الان تورنمنت بازی برای ثبت‌نام نیست — یکی بساز!"));
+        panel.appendChild(el("div", "hkt-note", t('trn_no_open','الان تورنمنت بازی برای ثبت‌نام نیست — یکی بساز!')));
         return;
       }
-      this.openList.forEach((t) => {
+      this.openList.forEach((item) => {
         const card = el("div", "hkt-card");
-        const modeFa = t.mode === "knockout" ? "حذفی" : "لیگ";
-        card.innerHTML = `<div class="hkt-name">${t.name}</div><div class="hkt-meta">${modeFa} · ${t.joined}/${t.size} نفر</div>`;
-        const joinBtn = el("button", null, "پیوستن");
-        joinBtn.addEventListener("click", () => this._send({ type: "join_tournament", tournamentId: t.id }));
+        const modeFa = item.mode === "knockout" ? t('trn_mode_knockout','حذفی') : t('trn_mode_league','لیگ');
+        card.innerHTML = `<div class="hkt-name">${item.name}</div><div class="hkt-meta">${modeFa} · ${item.joined}/${item.size} ${t('trn_people_suffix','نفر')}</div>`;
+        const joinBtn = el("button", null, t('trn_join_btn','پیوستن'));
+        joinBtn.addEventListener("click", () => this._send({ type: "join_tournament", tournamentId: item.id }));
         card.appendChild(joinBtn);
         panel.appendChild(card);
       });
@@ -289,7 +292,7 @@
       const panel = this.modal.querySelector('[data-panel="leaderboard"]');
       panel.innerHTML = "";
       if (!this.leaderboard.length) {
-        panel.appendChild(el("div", "hkt-note", "هنوز کسی رتبه‌بندی نشده."));
+        panel.appendChild(el("div", "hkt-note", t('trn_no_ranked','هنوز کسی رتبه‌بندی نشده.')));
         return;
       }
       this.leaderboard.forEach((pl, i) => {
