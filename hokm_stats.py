@@ -1,23 +1,26 @@
 """
-Hokm stats, replay & AI analysis — Phase 11.
+Hokm stats, replay & AI analysis — Phase 11 (+ Phase 15 real minimax).
 
 This module is the piece server.py was already wired for but never shipped:
-career stats, per-match replays, a heuristic "AI coach" that reviews a human's
-card choices, a stats-based global leaderboard, and an on-demand move
-suggestion. Everything here is pure/stateless — server.py owns all the
-mutable state (Player.stats, Player.match_history, Room.match_log, etc.) and
-just calls into these helpers.
+career stats, per-match replays, an "AI coach" that reviews a human's card
+choices, a stats-based global leaderboard, and an on-demand move suggestion.
+Everything here is pure/stateless — server.py owns all the mutable state
+(Player.stats, Player.match_history, Room.match_log, etc.) and just calls
+into these helpers.
 
-Honest scope note: the "AI analysis" is a heuristic coach, not a real trained
-model. It compares each human decision against what the existing bot AI
-(hokm_game.ai_choose_card) would have played in the same spot and buckets the
-gap into a handful of human-readable categories. It's good enough to point out
-patterns ("you're ruffing partner's tricks a lot") but it isn't a full
-double-dummy solver — a true optimal-play analyzer would need to search the
-remaining cards, which is future work.
+Phase 15 update: classify_decision() and suggest_move() now call
+hokm_minimax.best_card() — a real alpha-beta search over the actual known
+hands (see hokm_minimax.py for the honest scope note on exact vs. budgeted
+search) — instead of comparing against the simple bot (hokm_game.ai_choose_card).
+That comparison-to-a-simple-bot approach is kept as ai_choose_card itself is
+still what actually drives bot seats during live play (it has to answer
+instantly for every bot turn; minimax is deliberately reserved for the two
+places latency is acceptable: right after a human's own move, in the
+background, and on an explicit suggest_move request).
 """
 
 import hokm_game as G
+import hokm_minimax as MM
 
 # --------------------------------------------------------------- stats -----
 
@@ -136,12 +139,19 @@ _TAG_TIP = {
 }
 
 
-def classify_decision(hand: list, current_trick: list, card: dict, trump: str, seat: str) -> str:
-    """Classify a single card play by comparing it to what the bot AI would
-    have played in the exact same spot. Called live, right when a human
-    plays a card, so the tag can be stashed cheaply (before the hand's state
-    is mutated) for the post-match summary."""
-    recommended = G.ai_choose_card(hand, current_trick, trump, seat)
+def classify_decision(all_hands: dict, current_trick: list, card: dict, trump: str, seat: str,
+                       tricks_won: dict, node_budget: int = 20_000) -> str:
+    """Classify a single card play by comparing it to what a real minimax
+    search (hokm_minimax.best_card) says was best in the exact same spot —
+    all four seats' actual hands, all_hands, are the server's own known
+    state, same as a chess engine's hint feature. Runs off the critical
+    path (server.py fires this via asyncio.to_thread right after the human's
+    move, not blocking their next action), so node_budget is kept modest —
+    accurate for the later tricks of a hand, best-effort with a heuristic
+    fallback for the wide-open early ones (see hokm_minimax's docstring)."""
+    hand = all_hands[seat]
+    result = MM.best_card(all_hands, current_trick, trump, seat, tricks_won, node_budget)
+    recommended = result["card"]
     if recommended["suit"] == card["suit"] and recommended["rank"] == card["rank"]:
         return "optimal"
 
@@ -203,10 +213,17 @@ def summarize_analysis(decisions: list) -> dict:
     }
 
 
-def suggest_move(hand: list, current_trick: list, trump: str, seat: str) -> dict:
-    """On-demand move suggestion for a human seat: what would the AI play
-    right now, and (briefly) why."""
-    card = G.ai_choose_card(hand, current_trick, trump, seat)
+def suggest_move(all_hands: dict, current_trick: list, trump: str, seat: str,
+                  tricks_won: dict, node_budget: int = 300_000) -> dict:
+    """On-demand move suggestion for a human seat: a real minimax search
+    (hokm_minimax.best_card) over the actual known hands, not a guess. This
+    is only called when the player explicitly asks for a hint, so it gets a
+    much bigger node_budget than the live per-move classifier — usually an
+    exact double-dummy answer for the tricks it matters most (mid-to-late
+    hand), best-effort for a wide-open early hand."""
+    hand = all_hands[seat]
+    result = MM.best_card(all_hands, current_trick, trump, seat, tricks_won, node_budget)
+    card = result["card"]
     if not current_trick:
         reason = "چون تو شروع‌کننده‌ی دستی، یه برگ کوچیکِ غیرحکم بازی کن تا حکمت برای بعد بمونه."
     else:
@@ -217,7 +234,7 @@ def suggest_move(hand: list, current_trick: list, trump: str, seat: str) -> dict
             reason = "همخال نداری ولی این دست ارزش حکم زدن داره."
         else:
             reason = "این برگ ارزون‌ترین راه برای بردن یا کمک به این دسته."
-    return {"card": card, "reason": reason}
+    return {"card": card, "reason": reason, "exact": result["exact"]}
 
 
 # ---------------------------------------------------------- leaderboard ----

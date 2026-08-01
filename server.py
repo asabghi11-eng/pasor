@@ -322,6 +322,7 @@ class Room:
     hand_log: list = field(default_factory=list)     # tricks played so far in the current hand
     match_log: list = field(default_factory=list)    # finished hands so far in the current match (replay data)
     decisions: dict = field(default_factory=lambda: {s: [] for s in SEAT_HUMANS})  # human seat -> per-card snapshots for AI analysis
+    analysis_tasks: list = field(default_factory=list)  # Phase 15 — in-flight background minimax classify_decision() tasks, awaited before summarize_analysis()
 
     # Phase 14 — voice chat. Who currently has their mic "on" in this room.
     # The server never sees/touches actual audio — it only relays WebRTC
@@ -875,14 +876,46 @@ async def _do_choose_trump(room: Room, seat: str, suit: str):
     await schedule_seat_decision(room, room.turn, "play")
 
 
+async def _record_decision(room: Room, seat: str, hands_snapshot: dict, trick_snapshot: list,
+                            card: dict, tricks_snapshot: dict):
+    """Runs classify_decision's real minimax search in a thread and stashes
+    the result — see the call site in _do_play_card for why this is a
+    background task rather than something awaited inline."""
+    tag = await asyncio.to_thread(
+        ST.classify_decision, hands_snapshot, trick_snapshot, card, room.trump, seat, tricks_snapshot,
+    )
+    room.decisions.setdefault(seat, []).append({"tag": tag})
+
+
+async def _await_pending_analysis(room: Room):
+    """Called right before building the post-match summary so a still-running
+    background classify_decision() lands in it instead of being dropped.
+    Individually time-boxed so one slow search can't hang match-end."""
+    tasks, room.analysis_tasks = room.analysis_tasks, []
+    for task in tasks:
+        try:
+            await asyncio.wait_for(task, timeout=5.0)
+        except Exception:
+            pass
+
+
 async def _do_play_card(room: Room, seat: str, card: dict):
     hand = room.hands[seat]
 
-    # Phase 11 — snapshot this decision (human seats only) before the hand
-    # is mutated, for the post-match "AI coach" summary.
+    # Phase 11/15 — snapshot this decision (human seats only) before the hand
+    # is mutated, for the post-match "AI coach" summary. classify_decision
+    # now runs a real minimax search (hokm_minimax), so it's fired as a
+    # background task (thread) instead of awaited here — it never delays
+    # this player's move or anyone else's turn. room.analysis_tasks is
+    # awaited once, right before the post-match summary is built, so a slow
+    # search still lands in the summary instead of being silently dropped.
     if seat in room.human_seats():
-        tag = ST.classify_decision(list(hand), list(room.current_trick), card, room.trump, seat)
-        room.decisions.setdefault(seat, []).append({"tag": tag})
+        hands_snapshot = {s: list(h) for s, h in room.hands.items()}
+        trick_snapshot = list(room.current_trick)
+        tricks_snapshot = dict(room.tricks_won)
+        room.analysis_tasks.append(asyncio.create_task(
+            _record_decision(room, seat, hands_snapshot, trick_snapshot, card, tricks_snapshot)
+        ))
 
     hand[:] = [c for c in hand if not (c["suit"] == card["suit"] and c["rank"] == card["rank"])]
     room.current_trick.append({"seat": seat, "card": card})
@@ -971,6 +1004,7 @@ async def apply_rank_changes(room: Room, winner_team: str):
     that seat's own team, instead of assuming team A is always the humans.
     Updates each connected human's RR *and* their economy wallet/missions,
     and tells them what changed."""
+    await _await_pending_analysis(room)
     for seat in room.human_seats():
         pid = room.seats.get(seat)
         p = PLAYERS.get(pid) if pid else None
@@ -1134,6 +1168,7 @@ async def start_match(room: Room):
     room.match_id = uuid.uuid4().hex[:10]                   # Phase 11: id for this match's replay/history entry
     room.match_log = []                                    # Phase 11: fresh replay for this match
     room.decisions = {s: [] for s in room.human_seats()}    # Phase 11: fresh decision log for AI analysis
+    room.analysis_tasks = []    # Phase 15: drop any leftover tasks from a previous match
     hakem = random.choice(G.SEATS)
     deal_hand(room, hakem)
     room.phase = "choosing-trump"
@@ -1798,8 +1833,12 @@ async def handle_message(player_id: str, msg: dict):
         if not room or room.phase != "playing" or room.turn != p.seat or p.seat not in room.human_seats():
             await send(player_id, {"type": "suggestion", "card": None, "reason": None})
             return
-        hand = room.hands.get(p.seat, [])
-        suggestion = ST.suggest_move(hand, room.current_trick, room.trump, p.seat)
+        hands_snapshot = {s: list(h) for s, h in room.hands.items()}
+        trick_snapshot = list(room.current_trick)
+        tricks_snapshot = dict(room.tricks_won)
+        suggestion = await asyncio.to_thread(
+            ST.suggest_move, hands_snapshot, trick_snapshot, room.trump, p.seat, tricks_snapshot,
+        )
         await send(player_id, {"type": "suggestion", **suggestion})
         return
 
