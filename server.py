@@ -323,6 +323,15 @@ class Room:
     match_log: list = field(default_factory=list)    # finished hands so far in the current match (replay data)
     decisions: dict = field(default_factory=lambda: {s: [] for s in SEAT_HUMANS})  # human seat -> per-card snapshots for AI analysis
 
+    # Phase 14 — voice chat. Who currently has their mic "on" in this room.
+    # The server never sees/touches actual audio — it only relays WebRTC
+    # signaling (SDP offers/answers, ICE candidates) between the peers
+    # in this set so they can open a direct (mesh) peer-to-peer audio
+    # connection with each other. See voice_join/voice_leave/webrtc_*
+    # in handle_message() and the "Phase 14" note near the top of
+    # voice-panel.js for the full picture.
+    voice_participants: set = field(default_factory=set)
+
     def seat_of(self, player_id: str) -> Optional[str]:
         for seat, pid in self.seats.items():
             if pid == player_id:
@@ -779,6 +788,18 @@ async def broadcast_chat(room: Room, event: dict):
     room.chat_log.append(event)
     room.chat_log[:] = room.chat_log[-50:]
     await broadcast_room(room, lambda seat: {"type": "chat", **event})
+
+
+async def voice_remove(room: Room, player_id: str):
+    """Phase 14 — take a player out of a room's voice chat (mic toggled
+    off, they left the room, or they disconnected) and tell whoever's
+    left so their browsers can tear down that one peer connection.
+    Safe to call even if the player was never in voice."""
+    if player_id not in room.voice_participants:
+        return
+    room.voice_participants.discard(player_id)
+    for pid in list(room.voice_participants):
+        await send(pid, {"type": "voice_peer_left", "playerId": player_id})
 
 
 MAX_CHAT_LEN = 200
@@ -1276,6 +1297,8 @@ async def handle_message(player_id: str, msg: dict):
 
     if t == "leave_room":
         room = ROOMS.get(p.room_id)
+        if room:
+            await voice_remove(room, player_id)
         if room and room.phase == "waiting":
             if room.seats.get("south") == player_id:
                 # host left before the match started: the room is gone for everyone
@@ -1529,6 +1552,7 @@ async def handle_message(player_id: str, msg: dict):
     if t == "leave_spectate":
         room = ROOMS.get(p.room_id)
         if room:
+            await voice_remove(room, player_id)
             room.spectators.discard(player_id)
         p.room_id = None
         await send(player_id, {"type": "screen", "name": "lobby"})
@@ -1571,6 +1595,61 @@ async def handle_message(player_id: str, msg: dict):
         if not emoji:
             return
         await broadcast_chat(room, {"kind": "emoji", "from": p.name, "seat": p.seat, "playerId": player_id, "emoji": emoji})
+        return
+
+    # ------------------------------------------------------ Phase 14: voice chat --
+    # The server is a dumb signaling relay only — it never sees, stores,
+    # or forwards any actual audio. It just introduces peers to each
+    # other (voice_join/voice_leave) and passes along the WebRTC
+    # handshake messages (webrtc_offer/webrtc_answer/webrtc_ice) that
+    # the browsers use to open a *direct* peer-to-peer audio connection
+    # with one another. Once that connection is up, audio never touches
+    # this server again.
+
+    if t == "voice_join":
+        room = ROOMS.get(p.room_id)
+        if not room:
+            return
+        if SEC.is_muted(p.mute_until):
+            await send(player_id, {"type": "muted", "until": p.mute_until})
+            return
+        existing = [
+            {"playerId": pid, "name": PLAYERS[pid].name}
+            for pid in room.voice_participants
+            if pid != player_id and pid in PLAYERS
+        ]
+        room.voice_participants.add(player_id)
+        # Tell the joiner who's already in the call — THEY create the
+        # offer to each of these (avoids both sides racing to offer at
+        # once ("glare"), since only one side of a mesh link ever needs
+        # to initiate it).
+        await send(player_id, {"type": "voice_joined", "peers": existing})
+        # Tell everyone already in the call that a new peer is coming
+        # and to expect (and answer) an offer from them.
+        for pid in room.voice_participants:
+            if pid != player_id:
+                await send(pid, {"type": "voice_peer_joined", "playerId": player_id, "name": p.name})
+        return
+
+    if t == "voice_leave":
+        room = ROOMS.get(p.room_id)
+        if room:
+            await voice_remove(room, player_id)
+        return
+
+    if t in ("webrtc_offer", "webrtc_answer", "webrtc_ice"):
+        room = ROOMS.get(p.room_id)
+        target_id = msg.get("targetId")
+        if not room or not target_id or target_id not in room.voice_participants:
+            return
+        if player_id not in room.voice_participants:
+            return
+        payload = {"type": t, "fromId": player_id, "fromName": p.name}
+        if t == "webrtc_ice":
+            payload["candidate"] = msg.get("candidate")
+        else:
+            payload["sdp"] = msg.get("sdp")
+        await send(target_id, payload)
         return
 
     # ---------------------------------------------------------- Phase 9: reports --
@@ -1900,6 +1979,7 @@ async def status():
 for _panel_file in (
     "economy-panel.js", "social-panel.js", "tournament-panel.js",
     "monetization-panel.js", "stats-panel.js", "worldcup-panel.js",
+    "achievements-panel.js", "voice-panel.js",
 ):
     def _make_panel_route(filename):
         async def _serve():
@@ -2122,6 +2202,7 @@ async def ws_endpoint(ws: WebSocket):
                 MM_QUEUE.remove(player_id)
             room = ROOMS.get(p.room_id) if p.room_id else None
             if room:
+                await voice_remove(room, player_id)
                 if player_id in room.spectators:
                     room.spectators.discard(player_id)
                 elif room.phase == "waiting":

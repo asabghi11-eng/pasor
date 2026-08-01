@@ -1174,6 +1174,38 @@ _STRINGS = {
     "ach_locked": {
         "fa": 'قفل', "en": 'Locked', "ar": 'مقفل', "tr": 'Kilitli', "ru": 'Заблокировано',
     },
+
+    # ---- voice-panel.js (Phase 14) ----
+    "voi_chat_muted": {
+        "fa": 'چت صوتی تو موقتاً محدود شده', "en": 'Your voice chat is temporarily restricted', "ar": 'تم تقييد الدردشة الصوتية الخاصة بك مؤقتاً', "tr": 'Sesli sohbetin geçici olarak kısıtlandı', "ru": 'Ваш голосовой чат временно ограничен',
+    },
+    "voi_fab_label": {
+        "fa": 'صوتی', "en": 'Voice', "ar": 'صوتي', "tr": 'Sesli', "ru": 'Голос',
+    },
+    "voi_title": {
+        "fa": 'چت صوتی', "en": 'Voice chat', "ar": 'الدردشة الصوتية', "tr": 'Sesli sohbet', "ru": 'Голосовой чат',
+    },
+    "voi_join_btn": {
+        "fa": 'پیوستن به صدا', "en": 'Join voice', "ar": 'الانضمام للصوت', "tr": 'Sese katıl', "ru": 'Присоединиться к голосу',
+    },
+    "voi_leave_btn": {
+        "fa": 'خروج از صدا', "en": 'Leave voice', "ar": 'مغادرة الصوت', "tr": 'Sesten çık', "ru": 'Выйти из голоса',
+    },
+    "voi_mute_btn": {
+        "fa": 'بی\u200cصدا کردن خودم', "en": 'Mute myself', "ar": 'كتم صوتي', "tr": 'Kendimi sustur', "ru": 'Заглушить себя',
+    },
+    "voi_unmute_btn": {
+        "fa": 'برداشتن بی\u200cصدا', "en": 'Unmute myself', "ar": 'إلغاء كتم صوتي', "tr": 'Sesimi aç', "ru": 'Включить звук',
+    },
+    "voi_note": {
+        "fa": 'این یک تماس صوتی مستقیم بین مرورگرهاست (WebRTC) — فقط داخل اتاق فعلی کار می\u200cکنه. پشت بعضی شبکه\u200cها (مثل شبکه\u200cهای شرکتی) ممکنه وصل نشه.', "en": 'This is a direct browser-to-browser call (WebRTC) — it only works inside your current room. On some networks (like corporate firewalls) it may fail to connect.', "ar": 'هذه مكالمة مباشرة بين المتصفحات (WebRTC) — تعمل فقط داخل غرفتك الحالية. قد لا تتصل في بعض الشبكات (مثل شبكات الشركات).', "tr": 'Bu, tarayıcılar arası doğrudan bir çağrıdır (WebRTC) — sadece bulunduğun odada çalışır. Bazı ağlarda (örneğin kurumsal güvenlik duvarları) bağlanamayabilir.', "ru": 'Это прямой звонок между браузерами (WebRTC) — работает только в текущей комнате. В некоторых сетях (например, корпоративных) соединение может не установиться.',
+    },
+    "voi_mic_denied": {
+        "fa": 'دسترسی به میکروفون رد شد یا در دسترس نیست', "en": 'Microphone access was denied or unavailable', "ar": 'تم رفض الوصول إلى الميكروفون أو أنه غير متاح', "tr": 'Mikrofon erişimi reddedildi veya kullanılamıyor', "ru": 'Доступ к микрофону запрещён или недоступен',
+    },
+    "voi_you": {
+        "fa": 'شما', "en": 'You', "ar": 'أنت', "tr": 'Sen', "ru": 'Вы',
+    },
 }
 
 

@@ -575,6 +575,7 @@ function connect(firstMessage){
   if (window.HokmStats) HokmStats.attach(socket);
   if (window.HokmWorldCup) HokmWorldCup.attach(socket);
   if (window.HokmAchievements) HokmAchievements.attach(socket);
+  if (window.HokmVoice) HokmVoice.attach(socket);
 }
 
 function sendMsg(obj){
@@ -1291,5 +1292,6 @@ render();
 <script src="stats-panel.js"></script>
 <script src="worldcup-panel.js"></script>
 <script src="achievements-panel.js"></script>
+<script src="voice-panel.js"></script>
 </body>
 </html>
