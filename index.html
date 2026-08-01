@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>حکم — فاز ۴</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Real Google Sign-In (Google Identity Services). Loaded async; if it's
+     blocked/offline the page still works, loginGoogle() just falls back
+     to guest — see the GOOGLE_CLIENT_ID note near SERVER_URL below. -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --felt-1:#8a2c22;
+    --felt-2:#5c1a15;
+    --felt-edge:#3a100d;
+    --gold:#cda449;
+    --gold-bright:#f2d488;
+    --cream:#f6efdc;
+    --ink:#221a10;
+    --teamA:#e0b559;
+    --teamB:#8fb9c9;
+    --maroon:#9a332c;
+    --navy:#22405f;
+    --panel:#1c110d;
+    --panel-2:#241712;
+    --table-border:#7a5a26;
+    --table-outline:var(--gold);
+    --back-grad-1:#2c5a44;
+    --back-grad-2:#0f2f24;
+    --back-border:var(--gold);
+  }
+  *{box-sizing:border-box;}
+
+  /* ---- card skins ---- (--skin-glow drives hover glow + matches this
+     skin's particle/VFX accent color, set in SKINS[].accent in JS) */
+  #app[data-skin="classic"]{--skin-glow:rgba(242,212,136,.4);}
+  #app[data-skin="royal"]{--card-bg:#f3e8d8;--card-border:#cda449;--card-ink:#22204a;--card-red:#7a1220;--back-grad-1:#4a1942;--back-grad-2:#22091f;--back-border:#e8c876;--skin-glow:rgba(232,200,118,.5);}
+  #app[data-skin="neon"]{--card-bg:#12121c;--card-border:#37e6d6;--card-ink:#37e6d6;--card-red:#ff3d8a;--back-grad-1:#0d0d16;--back-grad-2:#000;--back-border:#ff3d8a;--skin-glow:rgba(55,230,214,.6);}
+  #app[data-skin="neon"] .pcard{box-shadow:0 0 10px rgba(55,230,214,.55),0 3px 6px rgba(0,0,0,.5);}
+  #app[data-skin="neon"] .card-back{box-shadow:0 0 10px rgba(255,61,138,.55);}
+  #app[data-skin="wood"]{--card-bg:#e8d3a5;--card-border:#6b4423;--card-ink:#4a2f18;--card-red:#8a3b24;--back-grad-1:#6b4423;--back-grad-2:#33200f;--back-border:#c99a55;--skin-glow:rgba(201,154,85,.45);}
+  #app[data-skin="gold"]{--card-bg:#fff3d0;--card-border:#a5822a;--card-ink:#1c1a12;--card-red:#8a1b1b;--back-grad-1:#d4af37;--back-grad-2:#7a5c14;--back-border:#fff3d0;--skin-glow:rgba(242,212,136,.6);}
+  #app[data-skin="gold"] .pcard{box-shadow:0 0 8px rgba(242,212,136,.5),0 3px 6px rgba(0,0,0,.4);}
+  #app[data-skin="black"]{--card-bg:#181818;--card-border:#4a4a4a;--card-ink:#f1e9d8;--card-red:#e0524a;--back-grad-1:#2a2a2a;--back-grad-2:#080808;--back-border:#9a9a9a;--skin-glow:rgba(200,200,200,.4);}
+  #app[data-skin="iranian"]{--card-bg:#f3ecd6;--card-border:#1f6f78;--card-ink:#6b1420;--card-red:#1f6f78;--back-grad-1:#1f6f78;--back-grad-2:#5c1a15;--back-border:#cda449;--skin-glow:rgba(31,111,120,.5);}
+
+  /* ---- mythic skin: "حکمِ افسانه‌ای" — Simurgh ink, old gold, deep jade ---- */
+  #app[data-skin="mythic"]{
+    --card-bg:#f6ecd2;--card-border:#8a6a2a;--card-ink:#241608;--card-red:#7a1f1f;
+    --back-grad-1:#0e2b22;--back-grad-2:#040f0b;--back-border:#e3bf6b;
+    --skin-glow:rgba(227,191,107,.55);--skin-particle:#e9c977;
+  }
+  #app[data-skin="mythic"] .pcard{box-shadow:0 0 12px rgba(227,191,107,.4),0 3px 8px rgba(0,0,0,.55) inset,0 3px 6px rgba(0,0,0,.4);border-color:#a5822a;}
+  #app[data-skin="mythic"] .trump-suit{box-shadow:0 0 0 1px var(--gold-bright),0 0 16px 3px rgba(227,191,107,.75),0 3px 6px rgba(0,0,0,.4);animation:trumpHalo 2.4s ease-in-out infinite;}
+  @keyframes trumpHalo{0%,100%{box-shadow:0 0 0 1px var(--gold-bright),0 0 12px 2px rgba(227,191,107,.6),0 3px 6px rgba(0,0,0,.4);}50%{box-shadow:0 0 0 1px var(--gold-bright),0 0 22px 6px rgba(227,191,107,.9),0 3px 6px rgba(0,0,0,.4);}}
+  /* mythic suit glyphs: shamshir / gol-e-anar / negin / sarv, replacing ♠♥♦♣ visually only for this skin */
+  #app[data-skin="mythic"] .pcard .s{font-size:0;}
+  #app[data-skin="mythic"] .pcard .s::after{font-size:17px;display:inline-block;}
+  #app[data-skin="mythic"] .pcard .s[data-suit="S"]::after{content:'⚔';color:#241608;}
+  #app[data-skin="mythic"] .pcard.red .s[data-suit="H"]::after{content:'❀';color:#7a1f1f;}
+  #app[data-skin="mythic"] .pcard.red .s[data-suit="D"]::after{content:'✦';color:#7a1f1f;}
+  #app[data-skin="mythic"] .pcard .s[data-suit="C"]::after{content:'❧';color:#241608;}
+  /* ornate ink-and-gold card back with a medallion motif */
+  #app[data-skin="mythic"] .card-back{
+    background:
+      radial-gradient(circle at 50% 50%, rgba(227,191,107,.28), transparent 58%),
+      repeating-linear-gradient(45deg, rgba(227,191,107,.07) 0 2px, transparent 2px 9px),
+      linear-gradient(160deg,var(--back-grad-1),var(--back-grad-2));
+  }
+  #app[data-skin="mythic"] .card-back::after{
+    inset:5px;border:1px solid rgba(227,191,107,.7);border-radius:4px;
+    box-shadow:inset 0 0 0 1px rgba(227,191,107,.25),inset 0 0 10px rgba(227,191,107,.35);
+  }
+  #app[data-skin="mythic"] .card-back::before{
+    content:'✦';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:13px;color:rgba(227,191,107,.85);text-shadow:0 0 6px rgba(227,191,107,.6);
+  }
+
+  /* ---- inkveil skin: "پشتِ کارتِ جوهر سیاه" — silver ink on jet black, splash-back product ---- */
+  #app[data-skin="inkveil"]{
+    --card-bg:#161616;--card-border:#4a4a4a;--card-ink:#e9e4d6;--card-red:#c94b4b;
+    --back-grad-1:#050505;--back-grad-2:#000;--back-border:#3a3a3a;
+    --skin-glow:rgba(230,230,230,.35);--skin-particle:#1a1a1a;
+  }
+  #app[data-skin="inkveil"] .pcard{box-shadow:0 0 10px rgba(200,200,200,.25),0 3px 6px rgba(0,0,0,.6);}
+  #app[data-skin="inkveil"] .card-back{
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,.1), transparent 40%),
+      radial-gradient(circle at 68% 72%, rgba(255,255,255,.06), transparent 35%),
+      linear-gradient(160deg,var(--back-grad-1),var(--back-grad-2));
+  }
+  #app[data-skin="inkveil"] .card-back::after{border-color:rgba(230,230,230,.35);box-shadow:inset 0 0 10px rgba(255,255,255,.08);}
+  #app[data-skin="inkveil"] .card-back::before{
+    content:'';position:absolute;inset:0;border-radius:inherit;
+    background-image:radial-gradient(circle, rgba(230,230,230,.55) 1px, transparent 1.3px),radial-gradient(circle, rgba(230,230,230,.4) 1px, transparent 1.3px);
+    background-size:9px 9px, 13px 13px;background-position:2px 3px, 6px 9px;opacity:.5;
+  }
+
+  /* ---- table felts ---- */
+  #app[data-table="cafe"]{--felt-1:#6b4023;--felt-2:#3a2414;--felt-edge:#20140c;--table-border:#8a6a3a;}
+  #app[data-table="wood"]{--felt-1:#1f4a35;--felt-2:#0d2419;--felt-edge:#081712;--table-border:#a67c3d;}
+  #app[data-table="stone"]{--felt-1:#54545a;--felt-2:#2c2c30;--felt-edge:#17171a;--table-border:#8a8a90;}
+  #app[data-table="marble"]{--felt-1:#d8d3c8;--felt-2:#a8a196;--felt-edge:#6e675c;--table-border:#b8ab8a;}
+  #app[data-table="luxury"]{--felt-1:#1c1410;--felt-2:#0a0705;--felt-edge:#000;--table-border:#f2d488;--table-outline:#f2d488;}
+  #app[data-table="ember"]{--felt-1:#3a0f05;--felt-2:#170502;--felt-edge:#0a0100;--table-border:#c9481a;--table-outline:#ff9a3d;}
+  #app[data-table="ember"] .felt{animation:emberPulse 3.4s ease-in-out infinite;}
+  @keyframes emberPulse{
+    0%,100%{box-shadow:0 20px 50px rgba(0,0,0,.55), inset 0 0 100px rgba(0,0,0,.55), 0 0 26px rgba(255,122,26,.35);}
+    50%{box-shadow:0 20px 50px rgba(0,0,0,.55), inset 0 0 100px rgba(0,0,0,.55), 0 0 46px rgba(255,122,26,.65);}
+  }
+  #app[data-table="ember"] .felt::before{
+    background-image:radial-gradient(circle at 30% 70%, rgba(255,154,61,.18), transparent 45%),radial-gradient(circle at 70% 30%, rgba(255,90,10,.15), transparent 45%);
+    opacity:1;
+  }
+  #app[data-table="luxury"] .felt{box-shadow:0 20px 60px rgba(0,0,0,.65), inset 0 0 120px rgba(0,0,0,.6), 0 0 40px rgba(242,212,136,.25);}
+  /* table textures — each felt genuinely changes material, not just color */
+  #app[data-table="wood"] .felt::before, #app[data-table="cafe"] .felt::before{
+    background-image:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.12) 0 3px, transparent 3px 26px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 26px);
+    background-size:auto;
+  }
+  #app[data-table="stone"] .felt::before{
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,.08) 0 2px, transparent 3px),
+      radial-gradient(circle at 60% 70%, rgba(0,0,0,.18) 0 3px, transparent 4px),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,.06) 0 2px, transparent 3px),
+      radial-gradient(circle at 40% 85%, rgba(0,0,0,.14) 0 2px, transparent 3px);
+    background-size:70px 70px,90px 90px,60px 60px,80px 80px;
+  }
+  #app[data-table="marble"] .felt::before{
+    background-image:
+      linear-gradient(115deg, transparent 40%, rgba(120,110,95,.25) 41%, transparent 43%),
+      linear-gradient(70deg, transparent 55%, rgba(120,110,95,.2) 56%, transparent 58%),
+      linear-gradient(20deg, transparent 25%, rgba(120,110,95,.18) 26%, transparent 28%);
+    background-size:auto;
+  }
+  #app[data-table="persian-rug"] .felt::before{opacity:1;animation:rugDrift 14s linear infinite;}
+  @keyframes rugDrift{
+    0%{background-position:0 0, 0 0, 13px 13px;}
+    100%{background-position:104px 0, -104px 0, 117px 13px;}
+  }
+  #app[data-table="persian-rug"] .rug-medallion{animation:rugSpin 90s linear infinite;}
+  @keyframes rugSpin{to{transform:translate(-50%,-50%) rotate(360deg);}}
+  /* soft light falling from above, drifting very gently for a living-room feel */
+  #app[data-table="persian-rug"] .felt{position:relative;}
+  #app[data-table="persian-rug"] .table-wrap::before{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:2;border-radius:50%/45%;
+    background:radial-gradient(ellipse 60% 40% at var(--lx,50%) 8%, rgba(255,244,214,.16), transparent 60%);
+    animation:lightDrift 9s ease-in-out infinite;
+  }
+  @keyframes lightDrift{0%,100%{--lx:46%;}50%{--lx:54%;}}
+  /* mythic atmosphere: drifting gold dust over the felt, only when the mythic skin is active */
+  #app[data-skin="mythic"] .table-wrap::after{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:2;border-radius:50%/45%;
+    background-image:
+      radial-gradient(circle, rgba(233,201,119,.9) 1px, transparent 1.4px),
+      radial-gradient(circle, rgba(233,201,119,.7) 1px, transparent 1.4px),
+      radial-gradient(circle, rgba(233,201,119,.6) 1px, transparent 1.4px);
+    background-size:180px 180px, 240px 240px, 210px 210px;
+    background-position:20px 30px, 120px 160px, 60px 220px;
+    animation:dustDrift 22s linear infinite;
+    opacity:.55;
+  }
+  @keyframes dustDrift{0%{background-position:20px 30px, 120px 160px, 60px 220px;}100%{background-position:20px 330px, -120px 160px, 360px -80px;}}
+  #app[data-table="luxury"] .felt::before{
+    background-image:repeating-conic-gradient(from 0deg, rgba(242,212,136,.06) 0deg 8deg, transparent 8deg 16deg);
+    background-size:auto;
+  }
+  html,body{margin:0;padding:0;height:100%;}
+  html{ overscroll-behavior-y:none; }
+  body{
+    font-family:'Vazirmatn',sans-serif;
+    background:
+      radial-gradient(ellipse at 50% 0%, #2c1712 0%, #170d0a 55%, #0c0605 100%);
+    color:var(--cream);
+    min-height:100vh;
+    min-height:100dvh; /* iOS/Android address-bar-safe viewport height */
+    overflow-x:hidden;
+    overscroll-behavior-y:none; /* stop pull-to-refresh from fighting card drags */
+    -webkit-tap-highlight-color:transparent;
+    transition:background .5s ease;
+  }
+  body[data-bg="dragon"]{background:radial-gradient(ellipse at 50% 0%, #123524 0%, #0a1f16 55%, #05100b 100%);}
+  body[data-bg="lion"]{background:radial-gradient(ellipse at 50% 0%, #3a2a12 0%, #211505 55%, #120b03 100%);}
+  body[data-bg="galaxy"]{
+    background:
+      radial-gradient(circle at 18% 26%, rgba(255,255,255,.7) 1px, transparent 1.6px),
+      radial-gradient(circle at 62% 12%, rgba(255,255,255,.5) 1px, transparent 1.6px),
+      radial-gradient(circle at 82% 46%, rgba(255,255,255,.6) 1px, transparent 1.6px),
+      radial-gradient(circle at 34% 70%, rgba(255,255,255,.5) 1px, transparent 1.6px),
+      radial-gradient(ellipse at 50% 0%, #1b1240 0%, #0d0930 55%, #05041a 100%);
+    background-size:120px 120px, 160px 160px, 140px 140px, 150px 150px, auto;
+  }
+  body[data-bg="shahanshahi"]{background:radial-gradient(ellipse at 50% 0%, #2a1442 0%, #180a28 55%, #0d0616 100%);}
+  body[data-bg="simurgh"]{background:radial-gradient(ellipse at 50% 0%, #123a2c 0%, #0a2018 55%, #05110c 100%);}
+
+  .avatar{
+    width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:16px;background:rgba(0,0,0,.3);border:2px solid var(--gold);flex-shrink:0;
+  }
+  .avatar.frame-dragon{border-color:#2f8f5c;box-shadow:0 0 8px rgba(47,143,92,.65);}
+  .avatar.frame-lion{border-color:#c98a2e;box-shadow:0 0 8px rgba(201,138,46,.65);}
+  .avatar.frame-shahanshahi{border-color:#b072e0;box-shadow:0 0 8px rgba(176,114,224,.65);}
+  .avatar.frame-galaxy{border-color:#6f7bf0;box-shadow:0 0 10px rgba(111,123,240,.75);}
+  .avatar.frame-simurgh{border-color:#e3bf6b;animation:simurghHalo 2.6s ease-in-out infinite;}
+  @keyframes simurghHalo{
+    0%,100%{box-shadow:0 0 8px rgba(227,191,107,.55),0 0 0 2px rgba(227,191,107,.25);}
+    50%{box-shadow:0 0 18px rgba(227,191,107,.9),0 0 0 3px rgba(227,191,107,.4);}
+  }
+  #app{
+    position:relative;min-height:100vh;min-height:100dvh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(10px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+  }
+
+  /* header */
+  .topbar{width:100%;max-width:920px;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;}
+  .brand{display:flex;flex-direction:column;line-height:1;}
+  .brand b{font-size:20px;letter-spacing:1px;color:var(--gold-bright);font-weight:800;}
+  .brand span{font-size:10px;color:#9db8ab;margin-top:3px;}
+  .score-pill{display:flex;gap:6px;background:var(--panel);border:1px solid #1f4536;border-radius:999px;padding:6px 12px;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.4) inset;}
+  .score-pill .a{color:var(--teamA);font-weight:700;}
+  .score-pill .b{color:var(--teamB);font-weight:700;}
+  .score-pill .sep{color:#5a7266;}
+  .topbar-actions{display:flex;align-items:center;gap:8px;}
+  .icon-btn{
+    width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--panel);border:1px solid #2a4f3f;color:var(--gold-bright);font-size:16px;cursor:pointer;
+  }
+  @media (hover:hover) and (pointer:fine){ .icon-btn:hover{border-color:var(--gold);} }
+  @media (max-width:640px){
+    .icon-btn{width:40px;height:40px;font-size:18px;} /* keep tap target >=40px on touch */
+  }
+
+  /* settings panel */
+  .settings-box{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid #2a4f3f;border-radius:16px;padding:20px;max-width:480px;width:100%;max-height:calc(100dvh - 32px);overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);margin:auto;}
+  .settings-box h2{margin:0 0 14px;color:var(--gold-bright);font-size:20px;text-align:center;}
+  .settings-section{margin-bottom:16px;}
+  .settings-section h3{margin:0 0 8px;font-size:13px;color:#9db8ab;font-weight:600;}
+  .swatch-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .swatch{
+    border-radius:10px;border:2px solid transparent;padding:8px 4px 6px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(0,0,0,.2);
+  }
+  .swatch.active{border-color:var(--gold-bright);box-shadow:0 0 10px rgba(242,212,136,.4);}
+  .swatch .chip{width:100%;height:34px;border-radius:6px;}
+  .swatch .lbl{font-size:10.5px;color:#e6dcc4;text-align:center;line-height:1.3;}
+  .settings-close{width:100%;margin-top:6px;}
+  .profile-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .profile-row input{
+    flex:1;background:rgba(0,0,0,.25);border:1px solid #2a4f3f;border-radius:8px;
+    padding:9px 12px;color:var(--cream);font-family:inherit;font-size:16px;
+  }
+  .profile-row input:focus{outline:none;border-color:var(--gold);}
+  .swatch-grid.small{grid-template-columns:repeat(6,1fr);}
+  .swatch-grid.small .chip{height:26px;font-size:16px;display:flex;align-items:center;justify-content:center;}
+  .settings-tabs{display:flex;gap:6px;margin-bottom:14px;}
+  .settings-tab{flex:1;text-align:center;padding:8px 4px;border-radius:8px;background:var(--panel);border:1px solid #2a4f3f;font-size:12px;cursor:pointer;color:#cfd9d2;}
+  .settings-tab.active{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#2a1e0a;font-weight:700;border-color:transparent;}
+
+  /* table */
+  .table-wrap{position:relative;width:100%;max-width:920px;aspect-ratio:16/10.5;margin-top:6px;}
+  .felt{
+    position:absolute;inset:0;
+    border-radius:50%/45%;
+    background:
+      radial-gradient(ellipse at 50% 38%, var(--felt-1) 0%, var(--felt-2) 60%, var(--felt-edge) 100%);
+    border:10px solid var(--table-border);
+    outline:2px solid var(--table-outline);
+    outline-offset:-8px;
+    transition:background .4s ease, border-color .4s ease;
+    box-shadow:0 20px 50px rgba(0,0,0,.55), inset 0 0 100px rgba(0,0,0,.55);
+  }
+  .felt::before{
+    content:'';position:absolute;inset:16px;border-radius:inherit;
+    background-image:
+      repeating-linear-gradient(45deg, transparent 0 26px, rgba(205,164,73,.35) 26px 28px, transparent 28px 52px),
+      repeating-linear-gradient(-45deg, transparent 0 26px, rgba(205,164,73,.35) 26px 28px, transparent 28px 52px),
+      radial-gradient(circle, rgba(232,215,176,.5) 1.4px, transparent 1.6px);
+    background-size:auto, auto, 52px 52px;
+    background-position:0 0, 0 0, 13px 13px;
+  }
+  .felt::after{
+    content:'';position:absolute;inset:16px;border-radius:inherit;
+    border:1.5px solid rgba(232,215,176,.4);
+    box-shadow:inset 0 0 0 6px rgba(58,16,13,.0), inset 0 0 0 9px rgba(205,164,73,.25);
+  }
+  .rug-medallion{
+    position:absolute;top:50%;left:50%;width:36%;aspect-ratio:1;
+    transform:translate(-50%,-50%);border-radius:50%;
+    background:
+      repeating-conic-gradient(from 0deg, rgba(205,164,73,.32) 0deg 4deg, transparent 4deg 30deg),
+      radial-gradient(circle, rgba(232,215,176,.18), transparent 72%);
+    opacity:.55;pointer-events:none;z-index:1;
+  }
+
+  .seat{position:absolute;display:flex;flex-direction:column;align-items:center;gap:4px;z-index:3;}
+  .seat.north{top:2%;left:50%;transform:translateX(-50%);}
+  .seat.south{bottom:1%;left:50%;transform:translateX(-50%);}
+  .seat.west{left:1%;top:50%;transform:translateY(-50%);}
+  .seat.east{right:1%;top:50%;transform:translateY(-50%);}
+
+  .name-tag{
+    font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;
+    background:rgba(10,20,16,.75);border:1px solid #2a4f3f;color:#e6dcc4;
+    display:flex;align-items:center;gap:6px;white-space:nowrap;
+  }
+  .name-tag .dot{width:7px;height:7px;border-radius:50%;background:var(--teamA);}
+  .seat.west .name-tag .dot, .seat.east .name-tag .dot{background:var(--teamB);}
+  .name-tag.active{box-shadow:0 0 0 2px var(--gold-bright), 0 0 14px var(--gold-bright);color:#fff;}
+  .name-tag .hakem-mark{color:var(--gold-bright);font-size:11px;}
+
+  .back-fan{display:flex;}
+  .back-fan.horiz{}
+  .card-back{
+    width:30px;height:44px;border-radius:5px;
+    background:
+      linear-gradient(135deg,var(--back-grad-1,#2c5a44),var(--back-grad-2,#0f2f24));
+    border:1.5px solid var(--back-border,var(--gold));
+    box-shadow:0 2px 5px rgba(0,0,0,.5);
+    margin-inline-start:-18px;
+    position:relative;
+  }
+  .card-back::after{content:'';position:absolute;inset:4px;border:1px solid rgba(205,164,73,.55);border-radius:3px;}
+  .back-fan .card-back:first-child{margin-inline-start:0;}
+  .seat.west .back-fan, .seat.east .back-fan{flex-direction:column;}
+  .seat.west .card-back, .seat.east .card-back{margin-inline-start:0;margin-top:-30px;}
+  .seat.west .card-back:first-child, .seat.east .card-back:first-child{margin-top:0;}
+
+  /* trump medallion */
+  .medallion{
+    position:absolute;top:2%;left:50%;transform:translate(-50%,68px);
+    width:56px;height:56px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #f5d98a, #cda449 60%, #7a5a26 100%);
+    border:2px solid #4a3616;
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;box-shadow:0 4px 14px rgba(0,0,0,.5);
+    z-index:4;
+  }
+  .medallion.empty{font-size:20px;color:#4a3616;}
+  .medallion .suit-red{color:var(--maroon);}
+  .medallion .suit-black{color:#221a10;}
+
+  /* trick area */
+  .trick-area{position:absolute;inset:0;pointer-events:none;}
+  .trick-card{
+    position:absolute;top:50%;left:50%;
+    width:52px;height:76px;
+    transition:all .35s ease;
+  }
+  .trick-card.p-south{transform:translate(-50%,-10%);}
+  .trick-card.p-north{transform:translate(-50%,-90%);}
+  .trick-card.p-west{transform:translate(-140%,-50%);}
+  .trick-card.p-east{transform:translate(40%,-50%);}
+  .trick-card.winner{filter:drop-shadow(0 0 10px var(--gold-bright));transform:translate(-50%,-50%) scale(1.15) !important;z-index:5;}
+
+  /* playing card — real 3D depth: layered shadows for thickness, a
+     pointer-tracked holographic sheen, and a subtle idle "breathing" life */
+  .pcard{
+    width:52px;height:76px;border-radius:6px;background:var(--card-bg,var(--cream));
+    border:1px solid var(--card-border,#b9a97a);
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:3px 5px;font-weight:700;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.5) inset,
+      0 -6px 10px -6px rgba(0,0,0,.35) inset,
+      0 3px 0 rgba(0,0,0,.18),
+      0 3px 6px rgba(0,0,0,.4);
+    color:var(--card-ink,var(--ink));
+    direction:ltr;
+    position:relative;overflow:hidden;
+    transform-style:preserve-3d;
+    will-change:transform;
+  }
+  .pcard .r{font-size:14px;line-height:1;text-align:left;}
+  .pcard .r:last-child{align-self:flex-end;}
+  .pcard .s{font-size:16px;align-self:center;}
+  .pcard.red{color:var(--card-red,var(--maroon));}
+  /* holographic sheen — a soft spotlight that follows the pointer
+     (--mx/--my, set by JS) plus a diagonal glare band */
+  .pcard::after{
+    content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+    background:
+      radial-gradient(circle at var(--mx,50%) var(--my,25%), rgba(255,255,255,.75), rgba(255,255,255,0) 45%),
+      linear-gradient(115deg, transparent 38%, rgba(255,255,255,.4) 50%, transparent 62%);
+    background-position:0 0, var(--shine,-140%) 0;
+    mix-blend-mode:overlay;
+    opacity:0;transition:opacity .28s ease;
+  }
+  .hand .pcard:hover::after, .hand .pcard.selected::after{opacity:1;}
+
+  /* south hand */
+  .hand{
+    position:relative;display:flex;justify-content:center;
+    height:96px;margin-top:8px;width:100%;
+    perspective:900px;
+  }
+  .hand .pcard{
+    position:absolute;bottom:0;cursor:pointer;
+    transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(0) translateZ(0)
+               rotateX(var(--tiltY,0deg)) rotateY(var(--tiltX,0deg));
+    transition:transform .18s ease, box-shadow .18s ease;
+    width:54px;height:78px;
+    touch-action:none;
+  }
+  .hand .pcard:hover:not(.disabled):not(.dragging):not(.selected){
+    transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(-14px) translateZ(30px)
+               rotateX(var(--tiltY,0deg)) rotateY(var(--tiltX,0deg)) scale(1.05);
+    box-shadow:0 14px 22px rgba(0,0,0,.55), 0 0 16px var(--skin-glow,rgba(242,212,136,.35));
+  }
+  .hand .pcard.selected{
+    transform: translateX(var(--tx,0px)) rotate(0deg) translateY(-30px) translateZ(46px) scale(1.08);
+    box-shadow:0 0 0 2px var(--gold-bright), 0 16px 26px rgba(0,0,0,.6), 0 0 22px var(--skin-glow,rgba(242,212,136,.45));
+    z-index:80 !important;
+  }
+  .hand .pcard.dragging{transition:none;z-index:200 !important;}
+  .hand .pcard.disabled{opacity:.45;cursor:not-allowed;}
+  /* idle "alive" breathing — gentle, staggered per card, off while
+     hovered/selected/dragged/disabled so it never fights those states */
+  @keyframes cardBreathe{
+    0%,100%{ transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(0) rotateX(0deg) rotateY(0deg); }
+    50%{ transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(-3px) rotateX(3deg) rotateY(1deg); }
+  }
+  .hand .pcard:not(.dragging):not(.selected):not(.disabled):not(:hover){
+    animation:cardBreathe 3.6s ease-in-out infinite;
+    animation-delay:var(--bd,0s);
+  }
+  /* face-down cards in opponents' hands breathe too, much more subtly */
+  @keyframes backBreathe{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-1.5px) rotate(.6deg);}}
+  .back-fan .card-back{animation:backBreathe 4.2s ease-in-out infinite;animation-delay:var(--bd,0s);}
+  .trick-card .pcard{animation:none;}
+
+  /* overlays */
+  .overlay{
+    position:fixed;inset:0;background:rgba(4,8,6,.72);
+    display:flex;align-items:center;justify-content:center;z-index:20;
+    padding:calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    overflow-y:auto; /* so tall panels can still be reached on short/landscape phones */
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    transition:background .3s ease, backdrop-filter .3s ease;
+  }
+  /* theme/shop tab: keep the backdrop light so the table + cards behind
+     the panel stay visible — that's what makes the swatch hover a real
+     "live preview" instead of just a color chip */
+  .overlay.preview-mode{background:rgba(4,8,6,.28);backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);}
+  .preview-hint{font-size:11px;color:#9db8ab;text-align:center;margin:-4px 0 12px;line-height:1.7;}
+
+  @keyframes shakeCard{
+    0%,100%{transform:translateX(var(--tx,0px)) rotate(var(--rot,0deg));}
+    20%{transform:translateX(calc(var(--tx,0px) - 6px)) rotate(var(--rot,0deg));}
+    40%{transform:translateX(calc(var(--tx,0px) + 6px)) rotate(var(--rot,0deg));}
+    60%{transform:translateX(calc(var(--tx,0px) - 4px)) rotate(var(--rot,0deg));}
+    80%{transform:translateX(calc(var(--tx,0px) + 4px)) rotate(var(--rot,0deg));}
+  }
+  .hand .pcard.shake{animation:shakeCard .38s ease;}
+
+  .particle-layer{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:visible;}
+  .particle{
+    position:absolute;top:50%;left:50%;width:6px;height:6px;border-radius:50%;
+    background:var(--skin-particle,var(--gold-bright));
+    animation:particleFly .7s ease-out forwards;
+  }
+  @keyframes particleFly{
+    0%{opacity:1;transform:translate(-50%,-50%) translate(0,0) scale(1);}
+    100%{opacity:0;transform:translate(-50%,-50%) translate(var(--px),var(--py)) scale(.3);}
+  }
+
+  /* ---- VFX canvas: card-play trails, trick-win sparkle, kot confetti ---- */
+  .vfx-canvas{position:absolute;inset:0;z-index:7;pointer-events:none;}
+
+  /* light wave that sweeps across the felt when a trick is won */
+  .felt-sweep{
+    position:absolute;top:50%;left:50%;width:10px;height:10px;border-radius:50%;
+    transform:translate(-50%,-50%);pointer-events:none;z-index:2;
+    border:2px solid var(--skin-glow,var(--gold-bright));
+    box-shadow:0 0 24px 6px var(--skin-glow,var(--gold-bright));
+    opacity:0;
+  }
+  .felt-sweep.go{animation:feltSweep .85s cubic-bezier(.2,.7,.3,1) forwards;}
+  @keyframes feltSweep{
+    0%{width:10px;height:10px;opacity:.9;}
+    100%{width:640px;height:640px;opacity:0;}
+  }
+
+  /* flying "ghost" card used for the play-trail animation */
+  .fly-card{position:fixed;z-index:300;pointer-events:none;left:0;top:0;
+    transition:transform .46s cubic-bezier(.2,.65,.25,1), opacity .46s ease;
+    will-change:transform,opacity;
+  }
+  /* Simurgh talisman: wings sprout from the card while it flies to the table */
+  #app[data-skin="mythic"] .fly-card::before, #app[data-skin="mythic"] .fly-card::after{
+    content:'';position:absolute;top:50%;width:20px;height:12px;
+    background:radial-gradient(ellipse at 50% 50%, rgba(227,191,107,.9), rgba(227,191,107,0) 72%);
+    opacity:0;animation:wingSprout .46s ease-out forwards;
+  }
+  #app[data-skin="mythic"] .fly-card::before{left:-16px;border-radius:60% 10% 60% 10%;animation-name:wingSproutL;}
+  #app[data-skin="mythic"] .fly-card::after{right:-16px;border-radius:10% 60% 10% 60%;animation-name:wingSproutR;}
+  @keyframes wingSproutL{0%{opacity:0;transform:translateY(-50%) translateX(6px) scale(.3) rotate(10deg);}40%{opacity:.9;}100%{opacity:0;transform:translateY(-50%) translateX(-10px) scale(1.15) rotate(-14deg);}}
+  @keyframes wingSproutR{0%{opacity:0;transform:translateY(-50%) translateX(-6px) scale(.3) rotate(-10deg);}40%{opacity:.9;}100%{opacity:0;transform:translateY(-50%) translateX(10px) scale(1.15) rotate(14deg);}}
+  .card-box{
+    background:linear-gradient(160deg,var(--panel-2),var(--panel));
+    border:1px solid #2a4f3f;border-radius:16px;padding:26px 22px;max-width:420px;width:100%;
+    max-height:calc(100dvh - 32px);overflow-y:auto;margin:auto;
+    text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6);
+  }
+  .card-box h2{margin:0 0 8px;color:var(--gold-bright);font-size:22px;}
+  .card-box p{margin:0 0 18px;color:#cfd9d2;font-size:14px;line-height:1.9;}
+  .btn{
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold));
+    color:#2a1e0a;border:none;border-radius:10px;padding:11px 22px;
+    font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;
+    box-shadow:0 4px 10px rgba(0,0,0,.3);
+  }
+  @media (hover:hover) and (pointer:fine){ .btn:hover{filter:brightness(1.06);} }
+  .suit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .suit-btn{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    background:var(--panel);border:1px solid #2a4f3f;border-radius:12px;padding:12px 8px;
+    cursor:pointer;color:var(--cream);font-weight:600;font-size:13px;
+  }
+  @media (hover:hover) and (pointer:fine){ .suit-btn:hover{border-color:var(--gold);} }
+  .suit-btn .sym{font-size:24px;}
+  .my5{display:flex;gap:6px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;}
+
+  .toast{
+    position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+    background:rgba(10,20,16,.92);border:1px solid var(--gold);color:var(--cream);
+    padding:9px 18px;border-radius:999px;font-size:13px;z-index:30;
+    max-width:calc(100vw - 24px);
+    box-shadow:0 6px 16px rgba(0,0,0,.5);
+  }
+  .footnote{max-width:920px;width:100%;text-align:center;color:#5f7a6d;font-size:11px;margin-top:14px;line-height:1.8;}
+
+  /* ---- phase 4: auth / lobby / matchmaking screens ---- */
+  .screen-wrap{width:100%;max-width:420px;margin:8vh auto 0;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 10px;}
+  .screen-logo{font-size:34px;font-weight:800;color:var(--gold-bright);letter-spacing:1px;margin-bottom:4px;}
+  .screen-sub{font-size:12px;color:#9db8ab;margin-bottom:26px;}
+  .auth-card{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid #2a4f3f;border-radius:16px;padding:26px 22px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  .auth-btn{
+    width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--panel-2);border:1px solid #2a4f3f;border-radius:10px;padding:12px;
+    color:var(--cream);font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;margin-bottom:10px;
+  }
+  @media (hover:hover) and (pointer:fine){ .auth-btn:hover{border-color:var(--gold);} }
+  .auth-btn.primary{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#2a1e0a;border:none;}
+  .auth-divider{display:flex;align-items:center;gap:10px;color:#5a7266;font-size:11px;margin:14px 0;}
+  .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#2a4f3f;}
+  /* Real Google Identity Services button, invisibly stacked over our
+     RTL-styled "ورود با گوگل" button so the click is genuinely handled
+     by Google's own widget (required — Google doesn't allow driving
+     its sign-in flow from a fully custom button), while what the user
+     sees stays consistent with the rest of our UI. */
+  .google-btn-wrap{position:relative;}
+  .google-btn-wrap .gsi-real{position:absolute;inset:0;opacity:0.001;overflow:hidden;z-index:2;}
+  .google-btn-wrap .gsi-real iframe{width:100%!important;}
+
+  .lobby-profile{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid #2a4f3f;border-radius:14px;padding:14px 16px;width:100%;margin-bottom:18px;}
+  .lobby-profile .avatar{width:44px;height:44px;font-size:22px;}
+  .lobby-profile .info{text-align:right;flex:1;}
+  .lobby-profile .info b{display:block;font-size:15px;color:var(--gold-bright);}
+  .lobby-profile .info span{font-size:11px;color:#9db8ab;}
+  .lobby-actions{display:flex;flex-direction:column;gap:10px;width:100%;}
+  .lobby-btn{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--panel);border:1px solid #2a4f3f;border-radius:12px;padding:14px 16px;
+    cursor:pointer;color:var(--cream);text-align:right;
+  }
+  @media (hover:hover) and (pointer:fine){ .lobby-btn:hover{border-color:var(--gold);} }
+  .lobby-btn .t{font-weight:700;font-size:14px;}
+  .lobby-btn .d{font-size:11px;color:#9db8ab;margin-top:2px;}
+  .lobby-btn.primary{background:linear-gradient(160deg,#1f4536,#173327);border-color:var(--gold);}
+  .lobby-note{font-size:10.5px;color:#5f7a6d;margin-top:16px;line-height:1.8;}
+
+  .rank-badge{display:flex;align-items:center;gap:6px;}
+  .rank-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 6px 0 var(--rank-color);}
+  .rank-label{font-size:11px;color:#9db8ab;}
+  .rank-progress{width:54px;height:4px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-inline-start:2px;}
+  .rank-progress-fill{height:100%;border-radius:3px;}
+
+  .rank-change{
+    margin:14px 0 4px;padding:14px 16px;border-radius:12px;
+    background:rgba(0,0,0,.25);border:1px solid #2a4f3f;
+    display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;color:#cfd9d2;
+  }
+  .rank-change .arrow{color:#5f7a6d;}
+  .rank-change .after{font-weight:700;}
+  .rank-change .delta{font-size:12px;padding:2px 8px;border-radius:20px;}
+  .rank-change .delta.up{color:#8fe0a8;background:rgba(143,224,168,.12);}
+  .rank-change .delta.down{color:#e08f8f;background:rgba(224,143,143,.12);}
+  .rank-change .promo-tag{font-size:11px;color:var(--gold-bright);}
+  .rank-change .demote-tag{font-size:11px;color:#e08f8f;}
+  .join-row{display:flex;gap:8px;width:100%;margin-bottom:10px;}
+  .join-row input{
+    flex:1;background:rgba(0,0,0,.25);border:1px solid #2a4f3f;border-radius:8px;
+    padding:11px 12px;color:var(--cream);font-family:inherit;font-size:16px;letter-spacing:3px;text-align:center;
+  }
+  .join-row input:focus{outline:none;border-color:var(--gold);}
+
+  .mm-spinner{width:70px;height:70px;border-radius:50%;border:4px solid #2a4f3f;border-top-color:var(--gold-bright);animation:spin 1s linear infinite;margin-bottom:22px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .mm-stat{display:flex;gap:18px;justify-content:center;margin-top:16px;font-size:12px;color:#9db8ab;}
+  .mm-stat b{color:var(--gold-bright);}
+  .room-code-box{background:var(--panel);border:2px dashed var(--gold);border-radius:14px;padding:18px;margin:18px 0;}
+  .room-code-box .code{font-size:32px;font-weight:800;letter-spacing:8px;color:var(--gold-bright);}
+  .room-slot{display:flex;align-items:center;gap:8px;justify-content:center;padding:8px;font-size:13px;color:#cfd9d2;}
+  .room-slot .avatar{width:26px;height:26px;font-size:14px;}
+  .room-slot.empty{color:#5f7a6d;}
+
+  .topbar-badges{display:flex;gap:6px;align-items:center;}
+  .ping-badge{
+    display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid #2a4f3f;
+    border-radius:999px;padding:5px 10px;font-size:11px;color:#9db8ab;
+  }
+  .ping-badge .dot2{width:6px;height:6px;border-radius:50%;background:#4caf6d;}
+  .ping-badge.bad .dot2{background:#e0524a;}
+
+  .reconnect-banner{
+    position:fixed;top:0;left:0;right:0;z-index:50;background:#7a1e1e;color:#fff;
+    text-align:center;padding:calc(10px + env(safe-area-inset-top)) 10px 10px;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.4);
+  }
+
+  @media (max-width:640px){
+    .table-wrap{aspect-ratio:5/8;}
+    .seat.north{top:6%;}
+    .seat.south{bottom:8%;}
+    .medallion{transform:translate(-50%,52px);width:48px;height:48px;font-size:21px;}
+    .card-back{width:24px;height:36px;}
+    .seat.west .card-back, .seat.east .card-back{margin-top:-24px;}
+    .pcard, .trick-card{width:42px;height:60px;}
+    .hand{height:78px;}
+    .hand .pcard{width:44px;height:64px;}
+    .trick-card.p-west{transform:translate(-120%,-50%);}
+    .trick-card.p-east{transform:translate(30%,-50%);}
+    .brand b{font-size:17px;}
+    .score-pill{font-size:12px;padding:5px 10px;}
+    .topbar{gap:6px;}
+  }
+  /* very narrow phones (e.g. small Android / iPhone SE portrait) */
+  @media (max-width:360px){
+    .name-tag{font-size:10.5px;padding:3px 8px;}
+    .medallion{width:42px;height:42px;font-size:18px;}
+    .pcard, .trick-card{width:36px;height:52px;}
+    .hand{height:68px;}
+    .hand .pcard{width:38px;height:56px;}
+    .card-back{width:20px;height:30px;}
+  }
+  /* short / landscape phones: table portrait ratio wastes height, so
+     let it size by height instead and compact the vertical chrome */
+  @media (max-height:480px) and (orientation:landscape){
+    #app{padding-top:6px;padding-bottom:6px;}
+    .topbar{margin-bottom:2px;}
+    .table-wrap{aspect-ratio:16/9;max-height:70dvh;width:auto;height:70dvh;}
+    .hand{height:64px;margin-top:4px;}
+    .hand .pcard{width:38px;height:56px;}
+    .medallion{width:38px;height:38px;font-size:16px;transform:translate(-50%,38px);}
+    .screen-wrap{margin-top:2vh;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ---------- data ---------- */
+const SUITS = {
+  S:{symbol:'♠', get name(){ return t('suit_spades','پیک'); }, color:'black'},
+  H:{symbol:'♥', get name(){ return t('suit_hearts','دل'); }, color:'red'},
+  D:{symbol:'♦', get name(){ return t('suit_diamonds','خشت'); }, color:'red'},
+  C:{symbol:'♣', get name(){ return t('suit_clubs','گشنیز'); }, color:'black'},
+};
+const SUIT_ORDER = ['S','H','D','C'];
+const RANK_LABEL = {11:'J',12:'Q',13:'K',14:'A'};
+function rankLabel(r){ return RANK_LABEL[r] || String(r); }
+
+/* ---------- state ---------- */
+let state = {
+  screen:'login',           // login | lobby | matchmaking | room-wait | game
+  phase:null,                // choosing-trump | playing | hand-end | match-end
+  mySeat:null, hakem:null, trump:null, turn:null,
+  hand:[], handCounts:{}, seatNames:{},
+  currentTrick:[], trickWinnerSeat:null,
+  tricksWon:{A:0,B:0}, roundsWon:{A:0,B:0},
+  handWinnerTeam:null, matchWinnerTeam:null,
+  partnerConnected:true,
+  toast:null, selectedIndex:null, shakeIndex:null,
+  skin:'classic', table:'persian-rug', showSettings:false, settingsTab:'profile',
+  profile:{name:'', avatar:'😎', frame:'none', background:'default'},
+  roomCode:null, roomSeats:{}, roomMySeat:null, roomIsHost:false, mmSeconds:0, ping:'—', reconnecting:false, loggingIn:false,
+  rank:{tier:'برنزی', division:3, label:'برنزی ۳', rr:0, progress:0, color:'#a5682a'},
+  rankChange:null,
+  i18n:{lang:'fa', languages:[], strings:{}},
+};
+/* t(key, fallback): looks up the server-sent catalog for the player's
+   current language; falls back to the original Persian string (passed
+   in at every call site) if the key/catalog isn't loaded yet — so the
+   UI never shows a raw key or blank text before login. */
+function t(key, fallback){
+  const strings = state.i18n && state.i18n.strings;
+  return (strings && strings[key]) || fallback;
+}
+const AVATARS = ['😎','🦁','🐉','🦅','🃏','👑','🐺','⚔️','🌙','🔥','🎯','💎'];
+const FRAMES = [
+  {id:'none', label:'ساده'},
+  {id:'dragon', label:'اژدها'},
+  {id:'lion', label:'شیر'},
+  {id:'shahanshahi', label:'شاهنشاهی'},
+  {id:'galaxy', label:'کهکشانی'},
+  {id:'simurgh', label:'قابِ افسانه'},
+];
+const BACKGROUNDS = [
+  {id:'default', label:'پیش‌فرض', c:'#2c1712'},
+  {id:'dragon', label:'اژدها', c:'#123524'},
+  {id:'lion', label:'شیر', c:'#3a2a12'},
+  {id:'galaxy', label:'کهکشانی', c:'#1b1240'},
+  {id:'shahanshahi', label:'شاهنشاهی', c:'#2a1442'},
+  {id:'simurgh', label:'افسانه', c:'#0e2b22'},
+];
+const SKINS = [
+  {id:'classic', label:'کلاسیک', c1:'#f6efdc', c2:'#b9a97a'},
+  {id:'royal', label:'سلطنتی', c1:'#4a1942', c2:'#e8c876'},
+  {id:'neon', label:'نئون', c1:'#12121c', c2:'#37e6d6'},
+  {id:'wood', label:'چوبی', c1:'#e8d3a5', c2:'#6b4423'},
+  {id:'gold', label:'طلایی', c1:'#fff3d0', c2:'#d4af37'},
+  {id:'black', label:'مشکی', c1:'#181818', c2:'#9a9a9a'},
+  {id:'iranian', label:'ایرانی', c1:'#f3ecd6', c2:'#1f6f78'},
+  {id:'mythic', label:'حکمِ افسانه‌ای', c1:'#f6ecd2', c2:'#0e2b22'},
+  {id:'inkveil', label:'جوهرِ سیاه', c1:'#161616', c2:'#e9e4d6'},
+];
+const TABLES = [
+  {id:'cafe', label:'کافه', c1:'#6b4023', c2:'#3a2414'},
+  {id:'wood', label:'چوب', c1:'#1f4a35', c2:'#0d2419'},
+  {id:'stone', label:'سنگ', c1:'#54545a', c2:'#2c2c30'},
+  {id:'marble', label:'مرمر', c1:'#d8d3c8', c2:'#a8a196'},
+  {id:'persian-rug', label:'فرش ایرانی', c1:'#8a2c22', c2:'#5c1a15'},
+  {id:'luxury', label:'لوکس', c1:'#1c1410', c2:'#f2d488'},
+  {id:'ember', label:'نمدِ آتشین', c1:'#3a0f05', c2:'#ff9a3d'},
+];
+let toastTimer=null;
+function showToast(msg){
+  state.toast = msg;
+  render();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ state.toast=null; render(); }, 1900);
+}
+
+/* ---------- phase 4: real networking ---------- */
+// Server address: same host the page was served from, port 8000 — or localhost
+// when the file is opened directly (file://). Change SERVER_URL if your
+// server.py runs somewhere else.
+const SERVER_URL = (function(){
+  if(location.protocol==='http:' || location.protocol==='https:'){
+    const proto = location.protocol==='https:' ? 'wss' : 'ws';
+    return `${proto}://${location.hostname}:8000/ws`;
+  }
+  return 'ws://localhost:8000/ws';
+})();
+
+// Real Google Sign-In: paste the OAuth Web Client ID from
+// https://console.cloud.google.com (see the setup steps at the top of
+// hokm_auth.py). Must be the SAME client ID the server was started
+// with (export GOOGLE_CLIENT_ID=...) — Google checks that the token's
+// audience matches. Left empty, loginGoogle() falls back to guest, same
+// as before this was wired up.
+const GOOGLE_CLIENT_ID = "";
+
+let ws = null;
+let sessionToken = null;
+let intentionalClose = false;
+let reconnectAttempts = 0;
+let reconnectTimer = null;
+let pingTimer = null;
+
+function connect(firstMessage){
+  // Close any previous socket, but tag it as an intentional close on the
+  // socket ITSELF — not on the shared `intentionalClose` variable. The old
+  // socket's close event fires asynchronously (after this function already
+  // returns), so a shared flag gets overwritten by the time it runs and the
+  // old, on-purpose close gets misread as a real drop — which snaps the UI
+  // back to the login screen right after a successful login. Tagging the
+  // socket instance avoids that race entirely.
+  if(ws){ ws._intentional = true; try{ ws.close(); }catch(e){} }
+  const socket = new WebSocket(SERVER_URL);
+  ws = socket;
+  socket._intentional = false;
+  // IMPORTANT: wire our own handlers — especially onopen, which sends the
+  // login/reconnect message — BEFORE calling any panel's .attach(socket).
+  // The server treats the very first message on a new connection as the
+  // auth message; several panels (e.g. worldcup-panel.js) add their own
+  // "open" listener that fires a request the instant the socket opens.
+  // Event listeners run in registration order, so if a panel's listener
+  // was registered first, its message could reach the server before our
+  // login message — the server then sees a non-login first message and
+  // immediately closes the connection with "ابتدا باید وارد شوید"
+  // (must-login-first), which looks exactly like login silently failing.
+  socket.onopen = ()=>{
+    reconnectAttempts = 0;
+    clearTimeout(reconnectTimer);
+    if(firstMessage) socket.send(JSON.stringify(firstMessage));
+    startPing();
+  };
+  socket.onmessage = (ev)=>{
+    let msg;
+    try{ msg = JSON.parse(ev.data); }catch(e){ return; }
+    handleServerMessage(msg);
+  };
+  socket.onclose = ()=>{
+    stopPing();
+    if(!socket._intentional) handleDrop();
+  };
+  socket.onerror = ()=>{ try{ socket.close(); }catch(e){} };
+  if (window.HokmEconomy) HokmEconomy.attach(socket);
+  if (window.HokmSocial) HokmSocial.attach(socket);
+  if (window.HokmTournament) HokmTournament.attach(socket);
+  if (window.HokmMonetization) HokmMonetization.attach(socket);
+  if (window.HokmStats) HokmStats.attach(socket);
+  if (window.HokmWorldCup) HokmWorldCup.attach(socket);
+  if (window.HokmAchievements) HokmAchievements.attach(socket);
+  if (window.HokmVoice) HokmVoice.attach(socket);
+}
+
+function sendMsg(obj){
+  if(ws && ws.readyState===WebSocket.OPEN){
+    ws.send(JSON.stringify(obj));
+  } else {
+    showToast('اتصال به سرور برقرار نیست...');
+  }
+}
+
+function handleDrop(){
+  if(!sessionToken){
+    state.loggingIn = false;
+    state.screen = 'login';
+    render();
+    return;
+  }
+  state.reconnecting = true;
+  render();
+  if(reconnectAttempts >= 10){
+    showToast('اتصال مجدد ناموفق بود. دوباره وارد شو.');
+    sessionToken = null;
+    state.screen = 'login';
+    state.reconnecting = false;
+    render();
+    return;
+  }
+  reconnectAttempts++;
+  const delay = Math.min(1000*reconnectAttempts, 5000);
+  clearTimeout(reconnectTimer);
+  reconnectTimer = setTimeout(()=>{
+    connect({type:'reconnect', session_token: sessionToken});
+  }, delay);
+}
+
+function startPing(){
+  stopPing();
+  pingTimer = setInterval(()=>{
+    if(ws && ws.readyState===WebSocket.OPEN){
+      ws.send(JSON.stringify({type:'ping', ts: Date.now()}));
+    }
+  }, 3000);
+}
+function stopPing(){ clearInterval(pingTimer); }
+
+function handleServerMessage(msg){
+  switch(msg.type){
+    case 'login_ok':
+      sessionToken = msg.session_token;
+      state.reconnecting = false;
+      state.loggingIn = false;
+      if(msg.name) state.profile.name = msg.name;
+      if(msg.rank) state.rank = msg.rank;
+      break;
+    case 'season_reset':
+      state.rank = msg.after;
+      showToast(`فصل جدید شروع شد — رتبه‌ت به ${msg.after.label} برگشت`);
+      break;
+    case 'rank_update':
+      state.rank = msg.after;
+      state.rankChange = msg;
+      break;
+    case 'screen':
+      clearInterval(state.mmTimer);
+      state.screen = msg.name;
+      if(msg.name === 'lobby') state.rankChange = null;
+      break;
+    case 'room_wait':
+      state.screen = 'room-wait';
+      state.roomCode = msg.code;
+      state.roomSeats = msg.seats || {};
+      state.roomMySeat = msg.mySeat || null;
+      state.roomIsHost = !!msg.isHost;
+      break;
+    case 'game_state':
+      applyGameState(msg);
+      break;
+    case 'toast':
+      showToast(msg.message);
+      break;
+    case 'error':
+      showToast(msg.message);
+      if(msg.message && msg.message.indexOf('نشست پیدا نشد') !== -1){
+        sessionToken = null;
+        clearTimeout(reconnectTimer);
+        state.screen = 'login';
+        state.reconnecting = false;
+      }
+      break;
+    case 'pong':
+      state.ping = Math.max(1, Date.now() - msg.ts) + 'ms';
+      break;
+    case 'i18n_state':
+      state.i18n.lang = msg.language || 'fa';
+      state.i18n.languages = msg.languages || [];
+      state.i18n.strings = msg.strings || {};
+      document.documentElement.lang = state.i18n.lang;
+      document.documentElement.dir = (state.i18n.lang === 'en' || state.i18n.lang === 'tr' || state.i18n.lang === 'ru') ? 'ltr' : 'rtl';
+      break;
+  }
+  render();
+}
+
+function applyGameState(msg){
+  const hadWinner = !!state.trickWinnerSeat;
+  const wasHandEnd = state.phase==='hand-end';
+  clearInterval(state.mmTimer);
+  state.screen = 'game';
+  state.reconnecting = false;
+  state.mySeat = msg.mySeat;
+  state.phase = msg.phase;
+  state.hakem = msg.hakem;
+  state.trump = msg.trump;
+  state.turn = msg.turn;
+  state.hand = msg.hand || [];
+  state.handCounts = msg.handCounts || {};
+  state.currentTrick = msg.currentTrick || [];
+  state.trickWinnerSeat = msg.trickWinnerSeat || null;
+  state.tricksWon = msg.tricksWon || {A:0,B:0};
+  state.roundsWon = msg.roundsWon || {A:0,B:0};
+  state.handWinnerTeam = msg.handWinnerTeam || null;
+  state.matchWinnerTeam = msg.matchWinnerTeam || null;
+  state.seatNames = msg.seatNames || {};
+  state.partnerConnected = msg.partnerConnected !== false;
+  state.selectedIndex = null;
+  if(!hadWinner && state.trickWinnerSeat){
+    setTimeout(spawnParticles, 0);
+    setTimeout(triggerFeltSweep, 0);
+  }
+  // "سور" (kot): the hand just ended and the losing team took zero tricks
+  if(!wasHandEnd && state.phase==='hand-end'){
+    const {A,B} = state.tricksWon || {A:0,B:0};
+    if((A===0 || B===0) && (A+B)>0){
+      setTimeout(vfxKotExplosion, 250);
+    }
+  }
+}
+
+// Real Google Sign-In. google.accounts.id fires onGoogleCredential(response)
+// with a signed ID token once the person picks their Google account —
+// the server (hokm_auth.py) verifies that token against Google's own
+// keys before trusting it, so no password or secret ever passes through
+// this page. Requires GOOGLE_CLIENT_ID above to be set; otherwise this
+// whole path is skipped and the button below just logs in as a guest,
+// same behavior as before.
+let gsiInitialized = false;
+function initGoogleSignIn(){
+  if(!GOOGLE_CLIENT_ID || gsiInitialized) return;
+  if(!window.google || !window.google.accounts || !window.google.accounts.id) return; // script still loading
+  window.google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: onGoogleCredential,
+    ux_mode: 'popup',
+  });
+  gsiInitialized = true;
+}
+function onGoogleCredential(response){
+  if(!response || !response.credential){
+    showToast('ورود با گوگل انجام نشد، دوباره تلاش کن');
+    return;
+  }
+  state.loggingIn = true; render();
+  connect({type:'login_google', id_token: response.credential});
+}
+// Renders Google's own (real, clickable) button invisibly on top of our
+// styled "ورود با گوگل" button. Google requires its widget to be the
+// thing that's actually clicked — this keeps our RTL styling while still
+// using Google's real, safe sign-in UI underneath. Must be re-run after
+// every renderLogin() since that rebuilds the DOM node from scratch.
+function renderGoogleButton(){
+  if(!GOOGLE_CLIENT_ID) return;
+  initGoogleSignIn();
+  const el = document.getElementById('gsiRealBtn');
+  if(!el || !window.google || !window.google.accounts || !window.google.accounts.id) return;
+  el.innerHTML = '';
+  window.google.accounts.id.renderButton(el, {type:'standard', width:280, size:'large'});
+}
+function loginGoogle(){
+  if(state.loggingIn) return;
+  if(GOOGLE_CLIENT_ID){
+    // The real Google button sitting invisibly on top of this one already
+    // handles the click. If it hasn't mounted yet (script still loading),
+    // there's nothing useful to do but ask the person to try again.
+    if(!gsiInitialized) showToast('در حال آماده‌سازی ورود با گوگل... چند لحظه دیگه دوباره امتحان کن');
+    return;
+  }
+  state.loggingIn = true; render();
+  const name = state.profile.name.trim() || 'کاربر گوگل';
+  showToast('ورود با گوگل تنظیم نشده — به‌عنوان مهمان وارد شدی');
+  state.profile.name = name;
+  connect({type:'login', name});
+}
+function loginGuest(){
+  if(state.loggingIn) return;
+  state.loggingIn = true; render();
+  const name = state.profile.name.trim() || ('مهمان'+Math.floor(1000+Math.random()*9000));
+  state.profile.name = name;
+  connect({type:'login', name});
+}
+function quickMatch(){
+  state.screen = 'matchmaking'; state.mmSeconds = 0; render();
+  clearInterval(state.mmTimer);
+  state.mmTimer = setInterval(()=>{ state.mmSeconds++; render(); }, 1000);
+  sendMsg({type:'quick_match'});
+}
+function cancelMatchmaking(){
+  clearInterval(state.mmTimer);
+  sendMsg({type:'cancel_matchmaking'});
+  state.screen = 'lobby'; render();
+}
+function createRoom(){
+  sendMsg({type:'create_room'});
+}
+function joinRoom(code){
+  if(!code || code.trim().length<3){ showToast('کد اتاق نامعتبره'); return; }
+  sendMsg({type:'join_room', code: code.trim().toUpperCase()});
+}
+function leaveRoom(){
+  sendMsg({type:'leave_room'});
+  state.screen = 'lobby'; render();
+}
+function simulateDisconnect(){
+  if(!ws) return;
+  state.showSettings = false; render();
+  showToast('در حال قطع عمدی اتصال برای تست reconnect...');
+  ws.close(); // real close -> triggers the same auto-reconnect flow as a real drop
+}
+
+/* ---------- gameplay actions (server-authoritative) ---------- */
+function sendChooseTrump(suit){
+  sendMsg({type:'choose_trump', suit});
+}
+function sendPlayCard(card){
+  sendMsg({type:'play_card', card:{suit:card.suit, rank:card.rank}});
+}
+function sendNextHand(){
+  sendMsg({type:'next_hand'});
+}
+function sendNewMatch(){
+  state.rankChange = null;
+  sendMsg({type:'new_match'});
+}
+
+function spawnParticles(){
+  const layer = document.querySelector('.particle-layer');
+  if(!layer) return;
+  const n = 16;
+  for(let i=0;i<n;i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = (Math.PI*2*i)/n + Math.random()*0.3;
+    const dist = 40 + Math.random()*50;
+    p.style.setProperty('--px', `${Math.cos(angle)*dist}px`);
+    p.style.setProperty('--py', `${Math.sin(angle)*dist}px`);
+    layer.appendChild(p);
+    setTimeout(()=>p.remove(), 750);
+  }
+}
+
+/* ==========================================================
+   VFX ENGINE — one lightweight canvas particle system shared by:
+     1) card-play dust trail (flyCardToCenter)
+     2) trick-win light sweep + sparkle burst
+     3) "kot/سور" full-sweep celebration explosion (confetti)
+   Stays idle (no rAF loop, no draws) whenever there are zero
+   live particles, so it costs nothing during normal play.
+   ========================================================== */
+const VFX = { particles: [], canvas:null, ctx:null, raf:null, w:0, h:0 };
+
+/* ==========================================================
+   SFX ENGINE — tiny synthesized sound set (Web Audio API, no
+   audio files to fetch/host). Everything is generated from
+   oscillators + a filtered noise burst, tuned to loosely evoke
+   santur/tar plucks and a frame-drum thud so it fits the mythic
+   atmosphere instead of sounding like generic UI beeps.
+   ========================================================== */
+const SFX = { ctx:null, muted:(function(){ try{ return localStorage.getItem('hokm_muted')==='1'; }catch(e){ return false; } })() };
+function sfxCtx(){
+  if(SFX.muted) return null;
+  if(!SFX.ctx){
+    try{ SFX.ctx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  if(SFX.ctx.state==='suspended') SFX.ctx.resume();
+  return SFX.ctx;
+}
+function sfxTone(freq, opts){
+  const o = Object.assign({type:'sine', dur:.25, gain:.16, delay:0, attack:.006, decay:.2}, opts||{});
+  const ctx = sfxCtx(); if(!ctx) return;
+  const t0 = ctx.currentTime + o.delay;
+  const osc = ctx.createOscillator(), g = ctx.createGain();
+  osc.type = o.type; osc.frequency.setValueAtTime(freq, t0);
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(o.gain, t0+o.attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+o.attack+o.decay+o.dur);
+  osc.connect(g); g.connect(ctx.destination);
+  osc.start(t0); osc.stop(t0+o.attack+o.decay+o.dur+0.05);
+}
+function sfxNoiseBurst(opts){
+  const o = Object.assign({dur:.12, gain:.12, delay:0, filterFreq:2200}, opts||{});
+  const ctx = sfxCtx(); if(!ctx) return;
+  const t0 = ctx.currentTime + o.delay;
+  const n = Math.max(1, Math.floor(ctx.sampleRate*o.dur));
+  const buffer = ctx.createBuffer(1, n, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<n;i++) data[i] = (Math.random()*2-1) * (1 - i/n);
+  const src = ctx.createBufferSource(); src.buffer = buffer;
+  const filt = ctx.createBiquadFilter(); filt.type='bandpass'; filt.frequency.value=o.filterFreq;
+  const g = ctx.createGain(); g.gain.setValueAtTime(o.gain, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0+o.dur);
+  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+  src.start(t0);
+}
+// soft pluck + air whoosh — plays the instant a card leaves the hand
+function sfxCardPlay(){ sfxNoiseBurst({dur:.08,gain:.09,filterFreq:3400}); sfxTone(560,{type:'triangle',dur:.05,gain:.045,decay:.05}); }
+// quiet tap for selecting/deselecting a card in hand
+function sfxCardTap(){ sfxTone(720,{type:'sine',dur:.03,gain:.03,decay:.03}); }
+// rising three-note chime when a trick is won, synced to the felt sweep
+function sfxTrickWin(){ [660,880,990].forEach((f,i)=>sfxTone(f,{type:'sine',dur:.28,gain:.08,delay:i*0.07,decay:.18})); }
+// shimmering high bell for the trump-card magic burst
+function sfxTrumpMagic(){ [990,1320,1760].forEach((f,i)=>sfxTone(f,{type:'sine',dur:.3,gain:.055,delay:i*0.05,decay:.22})); sfxNoiseBurst({dur:.15,gain:.045,filterFreq:6500}); }
+// deep gong + cascading chimes for a full sweep ("سور"/kot)
+function sfxKot(){
+  sfxTone(110,{type:'sine',dur:.9,gain:.15,decay:.6});
+  sfxTone(165,{type:'sine',dur:.7,gain:.08,decay:.5,delay:.02});
+  [220,330,440,550].forEach((f,i)=>sfxTone(f,{type:'triangle',dur:.4,gain:.055,delay:.15+i*0.09,decay:.25}));
+}
+
+function vfxAccentColor(){
+  // reads the current skin's glow color so every effect matches the
+  // equipped theme instead of always being gold
+  const app = document.getElementById('app');
+  const v = app && getComputedStyle(app).getPropertyValue('--skin-glow').trim();
+  return v || 'rgba(242,212,136,.6)';
+}
+function vfxEnsureCanvas(){
+  const c = document.querySelector('.vfx-canvas');
+  if(!c) return null;
+  if(VFX.canvas !== c){
+    VFX.canvas = c;
+    VFX.ctx = c.getContext('2d');
+  }
+  const wrap = document.querySelector('.table-wrap');
+  if(wrap){
+    const r = wrap.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    if(c.width !== Math.round(r.width*dpr) || c.height !== Math.round(r.height*dpr)){
+      c.width = Math.round(r.width*dpr);
+      c.height = Math.round(r.height*dpr);
+      VFX.ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    VFX.w = r.width; VFX.h = r.height;
+  }
+  return c;
+}
+function vfxSpawn(list){ VFX.particles.push(...list); vfxLoop(); }
+function vfxLoop(){
+  if(VFX.raf) return; // already running
+  const step = ()=>{
+    const c = vfxEnsureCanvas();
+    if(!c || !VFX.ctx){ VFX.raf=null; return; }
+    const ctx = VFX.ctx;
+    ctx.clearRect(0,0,VFX.w,VFX.h);
+    const now = performance.now();
+    VFX.particles = VFX.particles.filter(p=>now < p.until);
+    for(const p of VFX.particles){
+      const t = 1 - Math.max(0,(p.until-now))/p.life;   // 0..1 progress
+      p.x += p.vx; p.y += p.vy; p.vy += p.gravity||0;
+      p.vx *= (p.drag!=null?p.drag:0.985);
+      p.vy *= (p.drag!=null?p.drag:0.985);
+      p.rot = (p.rot||0) + (p.spin||0);
+      const alpha = Math.max(0, 1 - t);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(p.x, p.y);
+      if(p.rot) ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      if(p.shape==='rect'){
+        ctx.fillRect(-p.size/2, -p.size*0.35, p.size, p.size*0.7);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0,0,p.size*(1-t*0.4),0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    if(VFX.particles.length){
+      VFX.raf = requestAnimationFrame(step);
+    } else {
+      ctx.clearRect(0,0,VFX.w,VFX.h);
+      VFX.raf = null;
+    }
+  };
+  VFX.raf = requestAnimationFrame(step);
+}
+
+/* small trailing dust, used behind a flying card */
+function vfxTrail(xRatio, yRatio, color){
+  vfxEnsureCanvas();
+  const x = xRatio*VFX.w, y = yRatio*VFX.h;
+  const list = [];
+  for(let i=0;i<3;i++){
+    list.push({
+      x:x+(Math.random()-0.5)*6, y:y+(Math.random()-0.5)*6,
+      vx:(Math.random()-0.5)*0.6, vy:(Math.random()-0.5)*0.6,
+      gravity:0.01, drag:0.94, size:2+Math.random()*2.4,
+      color: color||vfxAccentColor(), life:520, until:performance.now()+520,
+    });
+  }
+  vfxSpawn(list);
+}
+
+/* sparkle burst at a point (0..1 ratios of table-wrap) — used for the
+   winning trick card, in addition to the felt light-sweep ring */
+function vfxSparkleBurst(xRatio, yRatio, color){
+  vfxEnsureCanvas();
+  const x = xRatio*VFX.w, y = yRatio*VFX.h;
+  const n = 20, list = [];
+  for(let i=0;i<n;i++){
+    const angle = (Math.PI*2*i)/n + Math.random()*0.4;
+    const speed = 1.4 + Math.random()*2.2;
+    list.push({
+      x, y, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed,
+      gravity:0.03, drag:0.965, size:2+Math.random()*2.6,
+      color: color||vfxAccentColor(), life:650+Math.random()*200, until:performance.now()+650+Math.random()*200,
+    });
+  }
+  vfxSpawn(list);
+}
+
+/* radial light wave across the felt when a trick is won */
+function triggerFeltSweep(){
+  const ring = document.querySelector('.felt-sweep');
+  if(!ring) return;
+  ring.classList.remove('go');
+  void ring.offsetWidth; // restart animation
+  ring.classList.add('go');
+  vfxSparkleBurst(0.5, 0.5);
+  sfxTrickWin();
+}
+
+/* big multi-colored confetti explosion for a full sweep ("kot"/"سور") —
+   winning every trick in the hand with the opponents left at zero */
+function vfxKotExplosion(){
+  vfxEnsureCanvas();
+  const colors = ['#f2d488','#cda449','#e05a5a','#5ac8e0','#8fe0a8','#e08fd0'];
+  const cx = VFX.w/2, cy = VFX.h*0.42;
+  const n = 90, list = [];
+  for(let i=0;i<n;i++){
+    const angle = Math.random()*Math.PI*2;
+    const speed = 2 + Math.random()*5.5;
+    list.push({
+      x:cx, y:cy, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed - 1.5,
+      gravity:0.09, drag:0.988,
+      size:3+Math.random()*4, shape: Math.random()<0.5?'rect':'circle',
+      rot:Math.random()*Math.PI, spin:(Math.random()-0.5)*0.35,
+      color: colors[i%colors.length],
+      life:1300+Math.random()*500, until:performance.now()+1300+Math.random()*500,
+    });
+  }
+  vfxSpawn(list);
+  sfxKot();
+  showToast('سور! 🎉 برد کامل این دست');
+}
+
+/* flying "ghost" card: clones the tapped card and animates it from the
+   hand to the middle of the table, trailing dust the whole way — this
+   plays instantly on tap, independent of the server round-trip */
+function flyCardToCenter(sourceEl, card){
+  const wrap = document.querySelector('.table-wrap');
+  if(!sourceEl || !wrap) return;
+  const startRect = sourceEl.getBoundingClientRect();
+  const wrapRect = wrap.getBoundingClientRect();
+  const ghost = sourceEl.cloneNode(true);
+  ghost.classList.add('fly-card');
+  ghost.style.width = startRect.width+'px';
+  ghost.style.height = startRect.height+'px';
+  ghost.style.transform = `translate(${startRect.left}px, ${startRect.top}px) rotate(0deg)`;
+  ghost.style.opacity = '1';
+  document.body.appendChild(ghost);
+  sfxCardPlay();
+
+  const endX = wrapRect.left + wrapRect.width*0.5 - startRect.width/2;
+  const endY = wrapRect.top + wrapRect.height*0.55 - startRect.height/2;
+  requestAnimationFrame(()=>{
+    ghost.style.transform = `translate(${endX}px, ${endY}px) rotate(${(Math.random()*40-20).toFixed(0)}deg) scale(.92)`;
+  });
+
+  // trailing dust sampled along the flight path
+  const steps = 10;
+  const color = vfxAccentColor();
+  for(let i=1;i<=steps;i++){
+    setTimeout(()=>{
+      const t = i/steps;
+      const px = startRect.left + (endX-startRect.left)*t + startRect.width/2;
+      const py = startRect.top + (endY-startRect.top)*t + startRect.height/2;
+      vfxTrail((px-wrapRect.left)/wrapRect.width, (py-wrapRect.top)/wrapRect.height, color);
+    }, i*40);
+  }
+  setTimeout(()=>{
+    ghost.style.opacity = '0';
+    setTimeout(()=>ghost.remove(), 200);
+  }, 380);
+
+  // magical burst when a trump card lands — the doc's "اثر جادویی"
+  if(card && state.trump && card.suit===state.trump){
+    setTimeout(()=>{
+      const cx = (endX + startRect.width/2 - wrapRect.left)/wrapRect.width;
+      const cy = (endY + startRect.height/2 - wrapRect.top)/wrapRect.height;
+      vfxSparkleBurst(cx, cy, color);
+      sfxTrumpMagic();
+    }, 380);
+  }
+}
+window.addEventListener('resize', ()=>{ vfxEnsureCanvas(); });
+
+/* ---------- seat helpers: rotate the table so mySeat always sits "south" (bottom) ---------- */
+function cssPosOf(seat){
+  const my = state.mySeat || 'south';
+  const partner = my==='north' ? 'south' : 'north';
+  if(seat===my) return 'south';
+  if(seat===partner) return 'north';
+  return seat; // west/east are always the bot seats
+}
+
+/* ---------- render ---------- */
+function cardHTML(card, extraClass, dataAttr){
+  const info = SUITS[card.suit];
+  const isTrump = state.trump && card.suit===state.trump;
+  const cls = (info.color==='red' ? 'pcard red' : 'pcard') + (isTrump ? ' trump-suit' : '');
+  return `<div class="${cls} ${extraClass||''}" ${dataAttr||''}>
+    <div class="r">${rankLabel(card.rank)}</div>
+    <div class="s" data-suit="${card.suit}">${info.symbol}</div>
+    <div class="r" style="align-self:flex-end;transform:rotate(180deg);">${rankLabel(card.rank)}</div>
+  </div>`;
+}
+function backFanHTML(count){
+  let html='';
+  for(let i=0;i<count;i++) html += `<div class="card-back" style="--bd:${(i*0.16).toFixed(2)}s"></div>`;
+  return html;
+}
+function medallionHTML(){
+  if(!state.trump) return `<div class="medallion empty">؟</div>`;
+  const info = SUITS[state.trump];
+  const cls = info.color==='red'?'suit-red':'suit-black';
+  return `<div class="medallion"><span class="${cls}">${info.symbol}</span></div>`;
+}
+function nameTagHTML(seat){
+  if(!seat) return '';
+  const active = state.turn===seat && state.phase==='playing';
+  const isHakem = state.hakem===seat;
+  const isMe = seat===state.mySeat;
+  const isPartner = !isMe && seat!=='west' && seat!=='east';
+  const offline = isPartner && !state.partnerConnected;
+  const displayName = isMe && state.profile.name.trim() ? state.profile.name.trim() : (state.seatNames[seat] || seat);
+  const avatarHTML = isMe ? `<span class="avatar frame-${state.profile.frame}">${state.profile.avatar}</span>` : '';
+  return `<div class="name-tag ${active?'active':''}">
+    ${avatarHTML}<span class="dot"></span>${displayName}${isHakem?` <span class="hakem-mark">(حاکم)</span>`:''}${offline?` <span class="hakem-mark" style="color:#e0524a;">(قطع)</span>`:''}
+  </div>`;
+}
+function seatsHTML(){
+  const bySeat = {};
+  ['south','west','north','east'].forEach(abs=>{ bySeat[cssPosOf(abs)] = abs; });
+  return `
+    <div class="seat north">${nameTagHTML(bySeat['north'])}<div class="back-fan">${backFanHTML(state.handCounts[bySeat['north']]||0)}</div></div>
+    <div class="seat west">${nameTagHTML(bySeat['west'])}<div class="back-fan">${backFanHTML(state.handCounts[bySeat['west']]||0)}</div></div>
+    <div class="seat east">${nameTagHTML(bySeat['east'])}<div class="back-fan">${backFanHTML(state.handCounts[bySeat['east']]||0)}</div></div>
+    <div class="seat south">${nameTagHTML(bySeat['south'])}</div>
+  `;
+}
+function trickCardsHTML(){
+  let html='';
+  for(const play of state.currentTrick){
+    const winning = state.trickWinnerSeat===play.seat;
+    html += `<div class="trick-card p-${cssPosOf(play.seat)} ${winning?'winner':''}">${cardHTML(play.card)}</div>`;
+  }
+  return html;
+}
+function handHTML(){
+  const hand = state.hand || [];
+  const n = hand.length;
+  const spread = Math.min(34, 320/Math.max(n,1));
+  return hand.map((c,i)=>{
+    const offset = (i - (n-1)/2) * spread;
+    const rot = (i - (n-1)/2) * 3;
+    const led = state.currentTrick.length ? state.currentTrick[0].card.suit : null;
+    const mustFollow = led && hand.some(cc=>cc.suit===led) && c.suit!==led;
+    const notYourTurn = !(state.phase==='playing' && state.turn===state.mySeat);
+    const disabled = mustFollow || notYourTurn;
+    const selected = state.selectedIndex===i ? 'selected' : '';
+    const shaking = state.shakeIndex===i ? 'shake' : '';
+    const extra = `${disabled?'disabled':''} ${selected} ${shaking}`.trim();
+    return cardHTML(c, extra, `style="--tx:${offset}px;--rot:${rot}deg;--bd:${(i*0.14).toFixed(2)}s;z-index:${i}" data-card-index="${i}"`);
+  }).join('');
+}
+
+function settingsHTML(){
+  const tab = state.settingsTab;
+  const profileTab = `
+    <div class="profile-row">
+      <span class="avatar frame-${state.profile.frame}">${state.profile.avatar}</span>
+      <input id="profile-name-input" type="text" maxlength="16" placeholder="${t('name_placeholder','اسمت رو بنویس')}" value="${state.profile.name.replace(/"/g,'&quot;')}">
+    </div>
+    <div class="settings-section">
+      <h3>${t('avatar_label','آواتار')}</h3>
+      <div class="swatch-grid small">
+        ${AVATARS.map(a=>`<div class="swatch ${state.profile.avatar===a?'active':''}" data-set-avatar="${a}">
+          <div class="chip">${a}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>${t('frame_label','قاب پروفایل')}</h3>
+      <div class="swatch-grid">
+        ${FRAMES.map(f=>`<div class="swatch ${state.profile.frame===f.id?'active':''}" data-set-frame="${f.id}">
+          <span class="avatar frame-${f.id}" style="width:100%;height:34px;border-radius:8px;">${state.profile.avatar}</span>
+          <div class="lbl">${f.label}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>${t('background_label','بک‌گراند')}</h3>
+      <div class="swatch-grid">
+        ${BACKGROUNDS.map(b=>`<div class="swatch ${state.profile.background===b.id?'active':''}" data-set-bg="${b.id}">
+          <div class="chip" style="background:${b.c}"></div>
+          <div class="lbl">${b.label}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    ${state.screen==='game'?`<div class="settings-section">
+      <h3>${t('network_test_label','تست شبکه')}</h3>
+      <button class="btn" style="width:100%;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="simulate-disconnect">${t('disconnect_test_btn','قطع واقعی اتصال (تست reconnect)')}</button>
+    </div>`:''}`;
+  const themeTab = `
+    <div class="preview-hint">✨ نگاهی به میز پشت این پنل بنداز — با هاور روی هر پوسته همین الان کارت‌ها و میز عوض می‌شن</div>
+    <div class="settings-section">
+      <h3>پوسته‌ی کارت</h3>
+      <div class="swatch-grid">
+        ${SKINS.map(sk=>`<div class="swatch ${state.skin===sk.id?'active':''}" data-set-skin="${sk.id}">
+          <div class="chip" style="background:linear-gradient(135deg,${sk.c1},${sk.c2})">${state.skin===sk.id?'<span style="font-size:14px;">✓</span>':''}</div>
+          <div class="lbl">${sk.label}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>میز بازی</h3>
+      <div class="swatch-grid">
+        ${TABLES.map(tb=>`<div class="swatch ${state.table===tb.id?'active':''}" data-set-table="${tb.id}">
+          <div class="chip" style="background:linear-gradient(135deg,${tb.c1},${tb.c2})">${state.table===tb.id?'<span style="font-size:14px;">✓</span>':''}</div>
+          <div class="lbl">${tb.label}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  const langTab = `
+    <div class="settings-section">
+      <h3>${t('tab_language','زبان')}</h3>
+      <div class="swatch-grid">
+        ${(state.i18n.languages||[]).map(row=>`<div class="swatch ${state.i18n.lang===row.key?'active':''}" data-set-lang="${row.key}">
+          <div class="chip" style="font-size:20px;display:flex;align-items:center;justify-content:center;">${row.flag}</div>
+          <div class="lbl">${row.native}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  const tabContent = tab==='profile' ? profileTab : tab==='lang' ? langTab : themeTab;
+  return `<div class="overlay ${tab==='theme'?'preview-mode':''}"><div class="settings-box">
+    <h2>${t('settings_title','پروفایل و شخصی‌سازی')}</h2>
+    <div class="settings-tabs">
+      <div class="settings-tab ${tab==='profile'?'active':''}" data-set-tab="profile">${t('tab_profile','پروفایل')}</div>
+      <div class="settings-tab ${tab==='theme'?'active':''}" data-set-tab="theme">${t('tab_theme','پوسته و میز')}</div>
+      <div class="settings-tab ${tab==='lang'?'active':''}" data-set-tab="lang">${t('tab_language','زبان')}</div>
+    </div>
+    ${tabContent}
+    <button class="btn settings-close" data-action="close-settings">${t('close_btn','بستن')}</button>
+  </div></div>`;
+}
+
+function renderLogin(app){
+  app.innerHTML = `
+    <div class="screen-wrap">
+      <div class="screen-logo">حکم</div>
+      <div class="screen-sub">${t('login_subtitle','پاسور ایرانی — آنلاین با دوستان')}</div>
+      <div class="auth-card">
+        <div class="google-btn-wrap">
+          <div id="gsiRealBtn" class="gsi-real"></div>
+          <button class="auth-btn primary" data-action="login-google" ${state.loggingIn?'disabled':''}>${t('login_with_google','ورود با گوگل')}</button>
+        </div>
+        <div class="auth-divider">${t('or_divider','یا')}</div>
+        <button class="auth-btn" data-action="login-guest" ${state.loggingIn?'disabled':''}>${state.loggingIn?t('connecting','در حال اتصال...'):t('continue_as_guest','ادامه به‌عنوان مهمان')}</button>
+      </div>
+      <div class="lobby-note">${t('login_server_note','برای بازی آنلاین باید سرور (server.py) روشن باشه. آدرس اتصال: {url}').replace('{url}', SERVER_URL)}</div>
+    </div>`;
+}
+function rankBadgeHTML(rank){
+  const color = rank.color || '#cda449';
+  const bar = (rank.progress==null) ? '' :
+    `<div class="rank-progress"><div class="rank-progress-fill" style="width:${rank.progress}%;background:${color}"></div></div>`;
+  return `<div class="rank-badge" style="--rank-color:${color}">
+    <span class="rank-dot" style="background:${color}"></span>
+    <span class="rank-label">${rank.label}</span>
+    ${bar}
+  </div>`;
+}
+function rankChangeHTML(){
+  const c = state.rankChange;
+  if(!c) return '';
+  const up = c.delta >= 0;
+  const tag = c.promoted ? `<span class="promo-tag">🎉 ارتقا به ${c.after.tier}!</span>`
+            : c.demoted ? `<span class="demote-tag">⚠️ سقوط به ${c.after.tier}</span>` : '';
+  return `<div class="rank-change">
+    <span>${c.before.label}</span>
+    <span class="arrow">→</span>
+    <span class="after">${c.after.label}</span>
+    <span class="delta ${up?'up':'down'}">${c.delta>=0?'+':''}${c.delta} RR</span>
+    ${tag}
+  </div>`;
+}
+function renderLobby(app){
+  app.innerHTML = `
+    <div class="screen-wrap">
+      <div class="lobby-profile">
+        <span class="avatar frame-${state.profile.frame}">${state.profile.avatar}</span>
+        <div class="info"><b>${state.profile.name||t('default_player_name','بازیکن')}</b>${rankBadgeHTML(state.rank)}</div>
+        <div class="icon-btn" data-action="open-settings" title="${t('settings_tooltip','تنظیمات')}">⚙</div>
+      </div>
+      <div class="lobby-actions">
+        <div class="lobby-btn primary" data-action="quick-match">
+          <div><div class="t">${t('quick_match_title','بازی سریع')}</div><div class="d">${t('quick_match_desc','متچ‌میکینگ خودکار با بازیکن دیگه')}</div></div>
+          <span>🎯</span>
+        </div>
+        <div class="lobby-btn" data-action="create-room">
+          <div><div class="t">${t('create_room_title','ساخت اتاق خصوصی')}</div><div class="d">${t('create_room_desc','یه کد بساز و برای دوستات بفرست')}</div></div>
+          <span>🔒</span>
+        </div>
+      </div>
+      <div class="auth-divider" style="width:100%">${t('join_with_code','پیوستن با کد')}</div>
+      <div class="join-row">
+        <input id="join-code-input" type="text" maxlength="6" placeholder="ABCD12">
+        <button class="btn" data-action="join-room">${t('join_btn','ورود')}</button>
+      </div>
+      <div class="lobby-note">${t('lobby_note','اینا الان روی سرور واقعی WebSocket کار می‌کنن. برای تست reconnect، وسط بازی از تنظیمات (⚙) اتصال رو قطع کن.')}</div>
+    </div>`;
+}
+function renderMatchmaking(app){
+  app.innerHTML = `
+    <div class="screen-wrap">
+      <div class="mm-spinner"></div>
+      <div class="screen-logo" style="font-size:20px;">${t('finding_opponent','در حال پیدا کردن حریف...')}</div>
+      <div class="mm-stat">
+        <span>${t('rank_label','رتبه')}: <b>${state.rank.label}</b></span>
+        <span>${t('time_label','زمان')}: <b>${state.mmSeconds}s</b></span>
+        <span>${t('ping_label','پینگ')}: <b>${state.ping}</b></span>
+      </div>
+      <button class="btn" style="margin-top:24px;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="cancel-matchmaking">${t('cancel_btn','لغو')}</button>
+    </div>`;
+}
+function renderRoomWait(app){
+  const seats = state.roomSeats || {};
+  const seatLabel = {
+    south:t('seat_south_host','جنوب (میزبان)'), north:t('seat_north','شمال'),
+    east:t('seat_east','شرق'), west:t('seat_west','غرب'),
+  };
+  const rows = ['south','north','east','west'].map(seat=>{
+    const name = seats[seat];
+    const isMe = seat === state.roomMySeat;
+    if(name){
+      return `<div class="room-slot">🟢 ${seatLabel[seat]}: ${name}${isMe?' '+t('you_suffix','(شما)'):''}</div>`;
+    }
+    return `<div class="room-slot empty">⏳ ${seatLabel[seat]}: ${t('waiting_join','در انتظار پیوستن...')}</div>`;
+  }).join('');
+  const emptyCount = ['south','north','east','west'].filter(s=>!seats[s]).length;
+  const hostControls = state.roomIsHost && emptyCount > 0
+    ? `<button class="btn" style="margin-top:10px;" data-action="start-with-bots">${t('start_with_bots_btn','شروع بازی با ربات برای صندلی‌های خالی')}</button>`
+    : '';
+  app.innerHTML = `
+    <div class="screen-wrap">
+      <div class="screen-logo" style="font-size:20px;">${t('private_room_title','اتاق خصوصی')}</div>
+      <div class="room-code-box"><div class="code">${state.roomCode||''}</div></div>
+      ${rows}
+      ${hostControls}
+      <button class="btn" style="margin-top:18px;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="leave-room">${t('leave_room_btn','خروج از اتاق')}</button>
+      <div class="lobby-note">${t('room_wait_note','این کد رو برای تا ۳ نفر از دوستات بفرست؛ هر کدوم توی «پیوستن با کد» همین کد رو وارد کنن (همه باید به همین سرور وصل باشید). با پر شدن هر ۴ صندلی بازی خودکار شروع می‌شه، یا می‌تونی زودتر با ربات برای بقیه صندلی‌ها شروع کنی.')}</div>
+    </div>`;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  // hovering a shop swatch previews it instantly on the real table/cards
+  // without committing — moving off the swatch reverts to the equipped one
+  app.dataset.skin = state.previewSkin || state.skin;
+  app.dataset.table = state.previewTable || state.table;
+  document.body.dataset.bg = state.profile.background;
+
+  if(state.screen==='login'){ renderLogin(app); renderGoogleButton(); return; }
+  if(state.screen==='lobby'){ renderLobby(app); return; }
+  if(state.screen==='matchmaking'){ renderMatchmaking(app); return; }
+  if(state.screen==='room-wait'){ renderRoomWait(app); return; }
+
+  let overlay = '';
+
+  if(state.showSettings){
+    overlay = settingsHTML();
+  } else if(!state.phase){
+    overlay = `<div class="overlay"><div class="card-box">
+      <h2>${t('preparing_title','در حال آماده‌سازی بازی...')}</h2>
+      <p>${t('preparing_desc','چند لحظه صبر کن تا کارت‌ها پخش بشه.')}</p>
+    </div></div>`;
+  } else if(state.phase==='choosing-trump' && state.hakem===state.mySeat){
+    const counts={};
+    (state.hand||[]).forEach(c=>counts[c.suit]=(counts[c.suit]||0)+1);
+    overlay = `<div class="overlay"><div class="card-box">
+      <h2>${t('hakem_title','شما حاکم هستید!')}</h2>
+      <p>${t('hakem_desc','یکی از این ۵ کارت رو دارید. یک خال رو به عنوان «حکم» انتخاب کنید:')}</p>
+      <div class="my5">${(state.hand||[]).map(c=>cardHTML(c)).join('')}</div>
+      <div class="suit-grid">
+        ${SUIT_ORDER.map(s=>`<div class="suit-btn" data-choose-trump="${s}">
+          <span class="sym" style="color:${SUITS[s].color==='red'?'var(--maroon)':'#e6dcc4'}">${SUITS[s].symbol}</span>
+          ${SUITS[s].name} (${counts[s]||0})
+        </div>`).join('')}
+      </div>
+    </div></div>`;
+  } else if(state.phase==='choosing-trump'){
+    overlay = `<div class="overlay"><div class="card-box">
+      <h2>${t('choosing_trump_title','انتخاب حکم')}</h2>
+      <p>${t('choosing_trump_desc','{name} حاکم این دست است و در حال انتخاب خال حکم است...').replace('{name}', state.seatNames[state.hakem]||'')}</p>
+    </div></div>`;
+  } else if(state.phase==='hand-end'){
+    const winnerTeam = state.handWinnerTeam;
+    overlay = `<div class="overlay"><div class="card-box">
+      <h2>${winnerTeam==='A'?t('hand_won_title','دست به تیم شما رسید! 🎉'):t('hand_lost_title','این دست رو حریف برد')}</h2>
+      <p>${t('hand_result_line','نتیجه‌ی این دست: {a} - {b} (تیک)').replace('{a}',state.tricksWon.A).replace('{b}',state.tricksWon.B)}<br>
+      ${t('match_score_line','امتیاز مسابقه: تیم شما {a} — حریف {b}').replace('{a}',state.roundsWon.A).replace('{b}',state.roundsWon.B)}</p>
+      <button class="btn" data-action="next-hand">${t('next_hand_btn','دست بعدی')}</button>
+    </div></div>`;
+  } else if(state.phase==='match-end'){
+    const winnerTeam = state.matchWinnerTeam;
+    overlay = `<div class="overlay"><div class="card-box">
+      <h2>${winnerTeam==='A'?t('match_won_title','برنده شدید! 🏆'):t('match_lost_title','مسابقه رو باختید')}</h2>
+      <p>${t('final_result_line','نتیجه‌ی نهایی: تیم شما {a} دست — حریف {b} دست').replace('{a}',state.roundsWon.A).replace('{b}',state.roundsWon.B)}</p>
+      ${rankChangeHTML()}
+      <button class="btn" data-action="new-match">${t('new_match_btn','مسابقه‌ی جدید')}</button>
+    </div></div>`;
+  }
+
+  app.innerHTML = `
+    ${state.reconnecting?`<div class="reconnect-banner">${t('reconnect_banner','📡 اتصال قطع شد — در حال تلاش برای اتصال مجدد...')}</div>`:''}
+    <div class="topbar">
+      <div class="brand"><b>حکم</b><span>${t('topbar_subtitle','فاز ۴ — آنلاین (سرور واقعی)')}</span></div>
+      <div class="topbar-actions">
+        <div class="ping-badge ${typeof state.ping==='number'&&state.ping>150?'bad':''}"><span class="dot2"></span>${state.ping}</div>
+        <div class="score-pill"><span class="a">${t('your_team','تیم شما')} ${state.roundsWon.A}</span><span class="sep">–</span><span class="b">${state.roundsWon.B} ${t('opponent','حریف')}</span></div>
+        <div class="icon-btn" data-action="toggle-mute" title="${t('mute_tooltip','صدا')}">${SFX.muted?'🔇':'🔊'}</div>
+        <div class="icon-btn" data-action="open-settings" title="${t('tab_theme','پوسته و میز')}">⚙</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div class="felt"></div>
+      <div class="rug-medallion"></div>
+      ${medallionHTML()}
+      ${seatsHTML()}
+      <div class="trick-area">${trickCardsHTML()}</div>
+      <div class="particle-layer"></div>
+      <div class="felt-sweep"></div>
+      <canvas class="vfx-canvas"></canvas>
+    </div>
+    <div class="hand">${handHTML()}</div>
+    <div class="footnote">${t('footnote_tricks','تیک‌های این دست — تیم شما: {a} \u00a0|\u00a0 حریف: {b}').replace('{a}',state.tricksWon.A).replace('{b}',state.tricksWon.B)}<br>${t('footnote_note','فاز ۴: ورود مهمان، اتاق خصوصی و بازی سریع روی سرور واقعی با WebSocket، پینگ واقعی و reconnect خودکار. سیستم رتبه‌بندی واقعی و اقتصاد بازی در فازهای بعدی.')}</div>
+    ${overlay}
+    ${state.toast?`<div class="toast">${state.toast}</div>`:''}
+  `;
+}
+
+/* ---------- events (delegated) ---------- */
+document.getElementById('app').addEventListener('click', (e)=>{
+  const loginGoogleBtn = e.target.closest('[data-action="login-google"]');
+  if(loginGoogleBtn){ loginGoogle(); return; }
+  const loginGuestBtn = e.target.closest('[data-action="login-guest"]');
+  if(loginGuestBtn){ loginGuest(); return; }
+  const quickMatchBtn = e.target.closest('[data-action="quick-match"]');
+  if(quickMatchBtn){ quickMatch(); return; }
+  const createRoomBtn = e.target.closest('[data-action="create-room"]');
+  if(createRoomBtn){ createRoom(); return; }
+  const joinRoomBtn = e.target.closest('[data-action="join-room"]');
+  if(joinRoomBtn){ const inp=document.getElementById('join-code-input'); joinRoom(inp?inp.value:''); return; }
+  const cancelMmBtn = e.target.closest('[data-action="cancel-matchmaking"]');
+  if(cancelMmBtn){ cancelMatchmaking(); return; }
+  const leaveRoomBtn = e.target.closest('[data-action="leave-room"]');
+  if(leaveRoomBtn){ leaveRoom(); return; }
+  const startWithBotsBtn = e.target.closest('[data-action="start-with-bots"]');
+  if(startWithBotsBtn){ sendMsg({type:'start_with_bots'}); return; }
+  const disconnectBtn = e.target.closest('[data-action="simulate-disconnect"]');
+  if(disconnectBtn){ simulateDisconnect(); return; }
+  const openSettings = e.target.closest('[data-action="open-settings"]');
+  if(openSettings){ state.showSettings=true; render(); return; }
+  const toggleMute = e.target.closest('[data-action="toggle-mute"]');
+  if(toggleMute){ SFX.muted = !SFX.muted; try{ localStorage.setItem('hokm_muted', SFX.muted?'1':'0'); }catch(e){} render(); return; }
+  const closeSettings = e.target.closest('[data-action="close-settings"]');
+  if(closeSettings){ state.showSettings=false; render(); return; }
+  const skinSwatch = e.target.closest('[data-set-skin]');
+  if(skinSwatch){ state.skin = skinSwatch.dataset.setSkin; state.previewSkin = null; showToast(t('skin_equipped','پوسته اعمال شد ✓')); render(); return; }
+  const tableSwatch = e.target.closest('[data-set-table]');
+  if(tableSwatch){ state.table = tableSwatch.dataset.setTable; state.previewTable = null; showToast(t('table_equipped','میز اعمال شد ✓')); render(); return; }
+  const tabBtn = e.target.closest('[data-set-tab]');
+  if(tabBtn){ state.settingsTab = tabBtn.dataset.setTab; render(); return; }
+  const langSwatch = e.target.closest('[data-set-lang]');
+  if(langSwatch){ sendMsg({type:'set_language', lang: langSwatch.dataset.setLang}); return; }
+  const avatarSwatch = e.target.closest('[data-set-avatar]');
+  if(avatarSwatch){ state.profile.avatar = avatarSwatch.dataset.setAvatar; render(); return; }
+  const frameSwatch = e.target.closest('[data-set-frame]');
+  if(frameSwatch){ state.profile.frame = frameSwatch.dataset.setFrame; render(); return; }
+  const bgSwatch = e.target.closest('[data-set-bg]');
+  if(bgSwatch){ state.profile.background = bgSwatch.dataset.setBg; render(); return; }
+  const nextBtn = e.target.closest('[data-action="next-hand"]');
+  if(nextBtn){ sendNextHand(); return; }
+  const newMatchBtn = e.target.closest('[data-action="new-match"]');
+  if(newMatchBtn){ sendNewMatch(); return; }
+  const trumpBtn = e.target.closest('[data-choose-trump]');
+  if(trumpBtn){ sendChooseTrump(trumpBtn.dataset.chooseTrump); return; }
+  const feltEl = e.target.closest('.felt, .rug-medallion, .trick-area');
+  if(feltEl && state.selectedIndex!=null){ state.selectedIndex=null; render(); }
+});
+
+/* ---------- live shop preview: hovering a swatch previews it for real,
+   on the actual table/cards, without committing anything ---------- */
+document.getElementById('app').addEventListener('mouseover', (e)=>{
+  const skinSwatch = e.target.closest('[data-set-skin]');
+  if(skinSwatch){
+    if(state.previewSkin !== skinSwatch.dataset.setSkin){ state.previewSkin = skinSwatch.dataset.setSkin; render(); }
+    return;
+  }
+  const tableSwatch = e.target.closest('[data-set-table]');
+  if(tableSwatch && state.previewTable !== tableSwatch.dataset.setTable){
+    state.previewTable = tableSwatch.dataset.setTable; render();
+  }
+});
+document.getElementById('app').addEventListener('mouseout', (e)=>{
+  const leavingSkin = e.target.closest('[data-set-skin]');
+  if(leavingSkin && (!e.relatedTarget || !leavingSkin.contains(e.relatedTarget)) && state.previewSkin){
+    state.previewSkin = null; render();
+  }
+  const leavingTable = e.target.closest('[data-set-table]');
+  if(leavingTable && (!e.relatedTarget || !leavingTable.contains(e.relatedTarget)) && state.previewTable){
+    state.previewTable = null; render();
+  }
+});
+
+document.getElementById('app').addEventListener('input', (e)=>{
+  if(e.target && e.target.id==='profile-name-input'){
+    state.profile.name = e.target.value;
+  }
+});
+
+/* select-on-first-tap, play-on-second-tap; dragging just previews and snaps back */
+function handleCardTap(idx){
+  if(!(state.phase==='playing' && state.turn===state.mySeat)) return;
+  const hand = state.hand;
+  const card = hand[idx];
+  if(!card) return;
+  const led = state.currentTrick.length ? state.currentTrick[0].card.suit : null;
+  const mustFollow = led && hand.some(c=>c.suit===led) && card.suit!==led;
+  if(mustFollow){
+    showToast('باید همخال بازی کنید');
+    state.shakeIndex = idx;
+    render();
+    setTimeout(()=>{ state.shakeIndex=null; render(); }, 400);
+    return;
+  }
+  if(state.selectedIndex===idx){
+    const cardEl = document.querySelector(`.hand [data-card-index="${idx}"]`);
+    if(cardEl) flyCardToCenter(cardEl, card);
+    sendPlayCard(card);
+    state.selectedIndex = null;
+    render();
+  } else {
+    state.selectedIndex = idx;
+    sfxCardTap();
+    render();
+  }
+}
+
+/* ---------- 3D holographic tilt/sheen (pointer-tracked) ---------- */
+document.addEventListener('pointermove', (e)=>{
+  const cardEl = e.target.closest && e.target.closest('.hand .pcard:not(.disabled)');
+  document.querySelectorAll('.hand .pcard.tilted').forEach(el=>{
+    if(el!==cardEl){
+      el.classList.remove('tilted');
+      el.style.removeProperty('--tiltX'); el.style.removeProperty('--tiltY');
+      el.style.removeProperty('--mx'); el.style.removeProperty('--my'); el.style.removeProperty('--shine');
+    }
+  });
+  if(!cardEl || drag) return;
+  const r = cardEl.getBoundingClientRect();
+  const px = (e.clientX - r.left) / r.width;   // 0..1
+  const py = (e.clientY - r.top) / r.height;   // 0..1
+  cardEl.classList.add('tilted');
+  cardEl.style.setProperty('--tiltX', `${(px-0.5)*18}deg`);
+  cardEl.style.setProperty('--tiltY', `${(0.5-py)*14}deg`);
+  cardEl.style.setProperty('--mx', `${px*100}%`);
+  cardEl.style.setProperty('--my', `${py*100}%`);
+  cardEl.style.setProperty('--shine', `${px*160-30}%`);
+}, {passive:true});
+
+let drag = null;
+document.addEventListener('pointerdown', (e)=>{
+  const cardEl = e.target.closest('.hand [data-card-index]');
+  if(!cardEl || cardEl.classList.contains('disabled')) return;
+  if(!(state.phase==='playing' && state.turn===state.mySeat)) return;
+  drag = { idx: parseInt(cardEl.dataset.cardIndex,10), cardEl, startX:e.clientX, startY:e.clientY, moved:false };
+  cardEl.classList.add('dragging');
+  if(cardEl.setPointerCapture) { try{ cardEl.setPointerCapture(e.pointerId); }catch(err){} }
+});
+document.addEventListener('pointermove', (e)=>{
+  if(!drag || !document.contains(drag.cardEl)) return;
+  const dx = e.clientX-drag.startX, dy = e.clientY-drag.startY;
+  if(Math.abs(dx)>6 || Math.abs(dy)>6) drag.moved = true;
+  if(drag.moved){
+    drag.cardEl.style.transform = `translate(${dx}px, ${dy}px) rotate(0deg) scale(1.1)`;
+  }
+});
+function endDrag(){
+  if(!drag) return;
+  const {idx, cardEl, moved} = drag;
+  if(document.contains(cardEl)){
+    cardEl.classList.remove('dragging');
+    cardEl.style.transform = '';
+  }
+  drag = null;
+  if(!moved) handleCardTap(idx);
+}
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+
+render();
+</script>
+<script src="economy-panel.js"></script>
+<script src="social-panel.js"></script>
+<script src="tournament-panel.js"></script>
+<script src="monetization-panel.js"></script>
+<script src="stats-panel.js"></script>
+<script src="worldcup-panel.js"></script>
+<script src="achievements-panel.js"></script>
+<script src="voice-panel.js"></script>
+</body>
+</html>
