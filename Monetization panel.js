@@ -27,7 +27,7 @@
 
   const CSS = `
   .hkm-fab {
-    position: fixed; bottom: calc(68px + env(safe-area-inset-bottom)); inset-inline-end: calc(18px + env(safe-area-inset-right)); z-index: 9997;
+    position: fixed; bottom: 68px; inset-inline-end: 18px; z-index: 9997;
     display: flex; align-items: center; gap: 8px;
     background: linear-gradient(135deg, #2a1230, #431a4d);
     border: 1px solid #c780e0; border-radius: 999px;
@@ -35,15 +35,7 @@
     font-family: inherit; color: #f3d9ff; user-select: none;
     transition: transform .15s ease;
   }
-  @media (hover:hover) and (pointer:fine){ .hkm-fab:hover { transform: translateY(-2px); } }
-  @media (max-width:640px){
-    .hkm-fab{
-      bottom: calc(172px + env(safe-area-inset-bottom));
-      inset-inline-end: calc(10px + env(safe-area-inset-right));
-      padding:6px 10px; gap:6px; font-size:12px;
-    }
-    .hkm-fab .hkm-crown{font-size:14px;}
-  }
+  .hkm-fab:hover { transform: translateY(-2px); }
   .hkm-fab .hkm-crown { font-size: 16px; }
   .hkm-fab .hkm-vip-badge {
     background: #ffd76a; color: #2a1230; font-weight: 700; font-size: 11px;
@@ -69,7 +61,7 @@
     background: linear-gradient(135deg, #2a1230, #1b0f1f);
   }
   .hkm-head h2 { margin: 0; font-size: 16px; }
-  .hkm-close { cursor: pointer; font-size: 20px; line-height: 1; color: #e6c8f5; background: none; border: none; width:44px; height:44px; display:flex; align-items:center; justify-content:center; margin:-10px; }
+  .hkm-close { cursor: pointer; font-size: 20px; line-height: 1; color: #e6c8f5; background: none; border: none; }
 
   .hkm-tabs { display: flex; border-bottom: 1px solid #3a1d42; flex-wrap: wrap; }
   .hkm-tab {
@@ -144,9 +136,9 @@
   function fmtHMS(totalSeconds) {
     const d = Math.floor(totalSeconds / 86400);
     const h = Math.floor((totalSeconds % 86400) / 3600);
-    if (d > 0) return t('mon_days_hours','{d} روز و {h} ساعت').replace('{d}', d).replace('{h}', h);
-    if (h > 0) return t('mon_hours','{h} ساعت').replace('{h}', h);
-    return t('mon_less_than_hour','کمتر از ۱ ساعت');
+    if (d > 0) return `${d} روز و ${h} ساعت`;
+    if (h > 0) return `${h} ساعت`;
+    return `کمتر از ۱ ساعت`;
   }
 
   class MonetizationPanel {
@@ -192,31 +184,31 @@
           this._renderAll();
           break;
         case "battle_pass_tier_up":
-          this._toast(t('mon_bp_tier_up','مرحله جدید پس نبرد باز شد: مرحله {tier} 🎉').replace('{tier}', msg.tier));
+          this._toast(`مرحله جدید پس نبرد باز شد: مرحله ${msg.tier} 🎉`);
           break;
         case "watch_ad_result":
-          if (msg.ok) this._toast(t('mon_ad_reward','از تبلیغ گرفتی: {coins} سکه').replace('{coins}', msg.reward.coins));
-          else this._toast(msg.error || t('mon_ad_unavailable','نمیشه الان تبلیغ دید'));
+          if (msg.ok) this._toast(`از تبلیغ گرفتی: ${msg.reward.coins} سکه`);
+          else this._toast(msg.error || "نمیشه الان تبلیغ دید");
           break;
         case "buy_vip_result":
-          if (msg.ok) this._toast(t('mon_vip_activated','VIP {plan} فعال شد!').replace('{plan}', msg.plan.fa));
-          else this._toast(msg.error || t('mon_vip_buy_error','خطا در خرید VIP'));
+          if (msg.ok) this._toast(`VIP ${msg.plan.fa} فعال شد!`);
+          else this._toast(msg.error || "خطا در خرید VIP");
           break;
         case "claim_vip_daily_result":
-          if (msg.ok) this._toast(t('mon_vip_daily_reward','جایزه روزانه VIP: {coins} سکه').replace('{coins}', msg.reward.coins));
-          else this._toast(msg.error || t('mon_vip_daily_error','خطا در دریافت جایزه VIP'));
+          if (msg.ok) this._toast(`جایزه روزانه VIP: ${msg.reward.coins} سکه`);
+          else this._toast(msg.error || "خطا در دریافت جایزه VIP");
           break;
         case "buy_gem_pack_result":
-          if (msg.ok) this._toast(t('mon_gems_added','{gems} جم اضافه شد').replace('{gems}', msg.gemsGranted));
-          else this._toast(msg.error || t('mon_gem_buy_error','خطا در خرید جم'));
+          if (msg.ok) this._toast(`${msg.gemsGranted} جم اضافه شد`);
+          else this._toast(msg.error || "خطا در خرید جم");
           break;
         case "buy_battle_pass_premium_result":
-          if (msg.ok) this._toast(t('mon_bp_premium_activated','پس پریمیوم فعال شد! 👑'));
-          else this._toast(msg.error || t('mon_bp_premium_error','خطا در خرید پس پریمیوم'));
+          if (msg.ok) this._toast("پس پریمیوم فعال شد! 👑");
+          else this._toast(msg.error || "خطا در خرید پس پریمیوم");
           break;
         case "claim_bp_reward_result":
-          if (msg.ok) this._toast(t('mon_bp_reward_claimed','جایزه پس نبرد دریافت شد 🎁'));
-          else this._toast(msg.error || t('mon_claim_error','خطا در دریافت جایزه'));
+          if (msg.ok) this._toast("جایزه پس نبرد دریافت شد 🎁");
+          else this._toast(msg.error || "خطا در دریافت جایزه");
           break;
       }
     }
@@ -225,7 +217,7 @@
       injectStyle();
 
       this.fab = el("div", "hkm-fab");
-      this.fab.innerHTML = `<span class="hkm-crown">👑</span><span>${t('mon_fab_label','VIP و پس نبرد')}</span><span class="hkm-vip-badge" data-vip-badge style="display:none">VIP</span>`;
+      this.fab.innerHTML = `<span class="hkm-crown">👑</span><span>VIP و پس نبرد</span><span class="hkm-vip-badge" data-vip-badge style="display:none">VIP</span>`;
       this.fab.addEventListener("click", () => this.open());
       document.body.appendChild(this.fab);
 
@@ -235,14 +227,14 @@
       const modal = el("div", "hkm-modal");
       modal.innerHTML = `
         <div class="hkm-head">
-          <h2>👑 ${t('mon_title','VIP و پس نبرد')}</h2>
+          <h2>👑 VIP و پس نبرد</h2>
           <button class="hkm-close" type="button">×</button>
         </div>
         <div class="hkm-tabs">
           <button class="hkm-tab hkm-active" data-tab="vip">VIP</button>
-          <button class="hkm-tab" data-tab="battlepass">${t('mon_tab_battlepass','پس نبرد')}</button>
-          <button class="hkm-tab" data-tab="gems">${t('mon_tab_gems','فروشگاه جم')}</button>
-          <button class="hkm-tab" data-tab="ads">${t('mon_tab_ads','تبلیغ')}</button>
+          <button class="hkm-tab" data-tab="battlepass">پس نبرد</button>
+          <button class="hkm-tab" data-tab="gems">فروشگاه جم</button>
+          <button class="hkm-tab" data-tab="ads">تبلیغ</button>
         </div>
         <div class="hkm-body">
           <div class="hkm-panel hkm-active" data-panel="vip"></div>
@@ -300,10 +292,10 @@
       if (this.vip.active) {
         status.innerHTML = `
           <div class="hkm-vip-big">👑</div>
-          <div>${t('mon_vip_active','عضو VIP هستی — {time} باقی مانده').replace('{time}', fmtHMS(this.vip.secondsLeft))}</div>
+          <div>عضو VIP هستی — ${fmtHMS(this.vip.secondsLeft)} باقی مانده</div>
         `;
       } else {
-        status.innerHTML = `<div class="hkm-vip-big">🔓</div><div class="hkm-muted">${t('mon_vip_not_active','هنوز VIP نیستی')}</div>`;
+        status.innerHTML = `<div class="hkm-vip-big">🔓</div><div class="hkm-muted">هنوز VIP نیستی</div>`;
       }
       panel.appendChild(status);
 
@@ -311,18 +303,18 @@
       dailyCard.innerHTML = `
         <div class="hkm-row">
           <div>
-            <div>🎁 ${t('mon_vip_daily_title','جایزه روزانه VIP')}</div>
-            <div class="hkm-muted">${t('mon_vip_daily_desc','{coins} سکه رایگان هر روز برای اعضای VIP').replace('{coins}', this.vip.dailyBonusCoins)}</div>
+            <div>🎁 جایزه روزانه VIP</div>
+            <div class="hkm-muted">${this.vip.dailyBonusCoins} سکه رایگان هر روز برای اعضای VIP</div>
           </div>
           <button class="hkm-btn" data-vip-daily ${this.vip.active && this.vip.canClaimDaily ? "" : "disabled"}>
-            ${!this.vip.active ? t('mon_vip_only','فقط VIP') : (this.vip.canClaimDaily ? t('mon_claim_btn','دریافت') : t('mon_claimed_btn','دریافت شد'))}
+            ${!this.vip.active ? "فقط VIP" : (this.vip.canClaimDaily ? "دریافت" : "دریافت شد")}
           </button>
         </div>
       `;
       dailyCard.querySelector("button").addEventListener("click", () => this._send({ type: "claim_vip_daily" }));
       panel.appendChild(dailyCard);
 
-      panel.appendChild(el("div", "hkm-muted", t('mon_vip_perks','مزایای VIP: ۱٫۲۵× سکه و ۱٫۱۵× XP در پایان هر بازی، به‌علاوه جایزه روزانه.')));
+      panel.appendChild(el("div", "hkm-muted", "مزایای VIP: ۱٫۲۵× سکه و ۱٫۱۵× XP در پایان هر بازی، به‌علاوه جایزه روزانه."));
 
       const grid = el("div", "hkm-plan-grid");
       (this.vip.plans || []).forEach((plan) => {
@@ -331,9 +323,9 @@
           <div class="hkm-row">
             <div>
               <div>${plan.fa}</div>
-              <div class="hkm-muted">${plan.priceToman.toLocaleString("fa-IR")} ${t('mon_toman','تومان')} (${plan.priceUSD}$)</div>
+              <div class="hkm-muted">${plan.priceToman.toLocaleString("fa-IR")} تومان (${plan.priceUSD}$)</div>
             </div>
-            <button class="hkm-btn" data-plan="${plan.id}">${t('mon_buy_btn','خرید')}</button>
+            <button class="hkm-btn" data-plan="${plan.id}">خرید</button>
           </div>
         `;
         card.querySelector("button").addEventListener("click", () => {
@@ -355,8 +347,8 @@
       progressWrap.innerHTML = `
         <div class="hkm-bp-bar"><div style="width:${bp.tier >= bp.maxTier ? 100 : pct}%"></div></div>
         <div class="hkm-bp-text">
-          <span>${t('mon_bp_tier_label','مرحله')} ${bp.tier} / ${bp.maxTier}</span>
-          <span>${bp.premium ? t('mon_bp_premium_active','پریمیوم فعال 👑') : t('mon_bp_free_only','فقط رایگان')}</span>
+          <span>مرحله ${bp.tier} / ${bp.maxTier}</span>
+          <span>${bp.premium ? "پریمیوم فعال 👑" : "فقط رایگان"}</span>
         </div>
       `;
       panel.appendChild(progressWrap);
@@ -366,8 +358,8 @@
         buyCard.innerHTML = `
           <div class="hkm-row">
             <div>
-              <div>👑 ${t('mon_bp_buy_premium_title','خرید مسیر پریمیوم')}</div>
-              <div class="hkm-muted">${t('mon_bp_buy_premium_desc','جوایز دو برابر بهتر در همه مراحل')}</div>
+              <div>👑 خرید مسیر پریمیوم</div>
+              <div class="hkm-muted">جوایز دو برابر بهتر در همه مراحل</div>
             </div>
             <button class="hkm-btn" data-buy-bp>💎 ${bp.premiumPriceGems}</button>
           </div>
@@ -392,13 +384,13 @@
           <div class="hkm-bp-reward ${reached ? "" : "hkm-locked"}">
             <span>🆓 ${freeRewardText}</span>
             <button class="hkm-btn hkm-ghost" data-claim="free" ${reached && !freeClaimed ? "" : "disabled"}>
-              ${freeClaimed ? t('mon_claimed_btn2','گرفته شد') : t('mon_claim_btn','دریافت')}
+              ${freeClaimed ? "گرفته شد" : "دریافت"}
             </button>
           </div>
           <div class="hkm-bp-reward ${reached && bp.premium ? "" : "hkm-locked"}">
             <span>👑 ${premRewardText}</span>
             <button class="hkm-btn" data-claim="premium" ${reached && bp.premium && !premClaimed ? "" : "disabled"}>
-              ${premClaimed ? t('mon_claimed_btn2','گرفته شد') : t('mon_claim_btn','دریافت')}
+              ${premClaimed ? "گرفته شد" : "دریافت"}
             </button>
           </div>
         `;
@@ -415,7 +407,7 @@
       const parts = [];
       if (reward.coins) parts.push(`🪙${reward.coins}`);
       if (reward.gems) parts.push(`💎${reward.gems}`);
-      if (reward.itemId) parts.push(`🎨 ${t('mon_special_item','آیتم ویژه')}`);
+      if (reward.itemId) parts.push(`🎨 آیتم ویژه`);
       return parts.join(" ") || "-";
     }
 
@@ -426,9 +418,9 @@
       (this.gemPacks || []).forEach((pack) => {
         const card = el("div", "hkm-card hkm-gem-item");
         card.innerHTML = `
-          <div style="font-size:22px">💎 ${pack.gems}${pack.bonus ? ` <span class="hkm-muted">(+${pack.bonus} ${t('mon_bonus','هدیه')})</span>` : ""}</div>
-          <div class="hkm-muted" style="margin:6px 0">${pack.priceToman.toLocaleString("fa-IR")} ${t('mon_toman','تومان')} (${pack.priceUSD}$)</div>
-          <button class="hkm-btn" data-pack="${pack.id}">${t('mon_buy_btn','خرید')}</button>
+          <div style="font-size:22px">💎 ${pack.gems}${pack.bonus ? ` <span class="hkm-muted">(+${pack.bonus} هدیه)</span>` : ""}</div>
+          <div class="hkm-muted" style="margin:6px 0">${pack.priceToman.toLocaleString("fa-IR")} تومان (${pack.priceUSD}$)</div>
+          <button class="hkm-btn" data-pack="${pack.id}">خرید</button>
         `;
         card.querySelector("button").addEventListener("click", () => {
           this._send({ type: "buy_gem_pack", packId: pack.id });
@@ -445,10 +437,10 @@
       const wrap = el("div", "hkm-ad-wrap");
       wrap.innerHTML = `
         <div class="hkm-ad-icon">📺</div>
-        <div>${t('mon_ad_prompt','یک تبلیغ کوتاه ببین و {coins} سکه بگیر').replace('{coins}', this.ads.rewardCoins)}</div>
-        <div class="hkm-muted" style="margin:6px 0 12px">${t('mon_today','امروز:')} ${this.ads.watchedToday}/${this.ads.maxPerDay}</div>
+        <div>یک تبلیغ کوتاه ببین و ${this.ads.rewardCoins} سکه بگیر</div>
+        <div class="hkm-muted" style="margin:6px 0 12px">امروز: ${this.ads.watchedToday}/${this.ads.maxPerDay}</div>
         <button class="hkm-btn" data-watch-ad ${remaining > 0 ? "" : "disabled"}>
-          ${remaining > 0 ? t('mon_watch_ad_btn','تماشای تبلیغ') : t('mon_ad_cap_reached','سقف امروز تمام شد')}
+          ${remaining > 0 ? "تماشای تبلیغ" : "سقف امروز تمام شد"}
         </button>
       `;
       wrap.querySelector("button").addEventListener("click", () => this._send({ type: "watch_ad" }));

@@ -23,7 +23,7 @@
 
   const CSS = `
   .hkt-fab {
-    position: fixed; bottom: 74px; inset-inline-start: 18px; z-index: 9998;
+    position: fixed; bottom: calc(74px + env(safe-area-inset-bottom)); inset-inline-start: calc(18px + env(safe-area-inset-left)); z-index: 9998;
     display: flex; align-items: center; gap: 8px;
     background: linear-gradient(135deg, #241016, #3a1420);
     border: 1px solid #d64d6e; border-radius: 999px;
@@ -31,7 +31,14 @@
     font-family: inherit; color: #ffd9e2; user-select: none;
     transition: transform .15s ease;
   }
-  .hkt-fab:hover { transform: translateY(-2px); }
+  @media (hover:hover) and (pointer:fine){ .hkt-fab:hover { transform: translateY(-2px); } }
+  @media (max-width:640px){
+    .hkt-fab{
+      bottom: calc(130px + env(safe-area-inset-bottom));
+      inset-inline-start: calc(10px + env(safe-area-inset-left));
+      padding:6px 10px; gap:6px; font-size:12px;
+    }
+  }
 
   .hkt-overlay {
     position: fixed; inset: 0; background: rgba(10,7,3,.72);
@@ -48,7 +55,7 @@
   }
   .hkt-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #3a1420; background: linear-gradient(135deg, #2a1017, #1b0e12); }
   .hkt-head h2 { margin: 0; font-size: 16px; }
-  .hkt-close { cursor: pointer; font-size: 20px; line-height: 1; color: #e6b9c4; background: none; border: none; }
+  .hkt-close { cursor: pointer; font-size: 20px; line-height: 1; color: #e6b9c4; background: none; border: none; width:44px; height:44px; display:flex; align-items:center; justify-content:center; margin:-10px; }
   .hkt-tabs { display: flex; border-bottom: 1px solid #3a1420; }
   .hkt-tab { flex: 1; text-align: center; padding: 10px 4px; cursor: pointer; font-size: 13px; color: #a97785; border-bottom: 2px solid transparent; }
   .hkt-tab.hkt-active { color: #d64d6e; border-bottom-color: #d64d6e; }
@@ -62,7 +69,7 @@
   .hkt-card button { margin-top: 8px; border: none; border-radius: 8px; background: #d64d6e; color: #1b0e12; font-weight: 700; padding: 7px 12px; cursor: pointer; }
 
   .hkt-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-  .hkt-field input, .hkt-field select { border-radius: 8px; border: 1px solid #3a1420; background: #12080b; color: #ffd9e2; padding: 8px; font-family: inherit; }
+  .hkt-field input, .hkt-field select { border-radius: 8px; border: 1px solid #3a1420; background: #12080b; color: #ffd9e2; padding: 8px; font-family: inherit; font-size: 16px; }
   .hkt-field button { border: none; border-radius: 8px; background: #d64d6e; color: #1b0e12; font-weight: 700; padding: 9px 12px; cursor: pointer; }
 
   .hkt-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 4px; border-bottom: 1px solid #3a1420; font-size: 13px; }

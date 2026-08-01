@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>حکم — فاز ۴</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -33,16 +33,70 @@
   }
   *{box-sizing:border-box;}
 
-  /* ---- card skins ---- */
-  #app[data-skin="royal"]{--card-bg:#f3e8d8;--card-border:#cda449;--card-ink:#22204a;--card-red:#7a1220;--back-grad-1:#4a1942;--back-grad-2:#22091f;--back-border:#e8c876;}
-  #app[data-skin="neon"]{--card-bg:#12121c;--card-border:#37e6d6;--card-ink:#37e6d6;--card-red:#ff3d8a;--back-grad-1:#0d0d16;--back-grad-2:#000;--back-border:#ff3d8a;}
+  /* ---- card skins ---- (--skin-glow drives hover glow + matches this
+     skin's particle/VFX accent color, set in SKINS[].accent in JS) */
+  #app[data-skin="classic"]{--skin-glow:rgba(242,212,136,.4);}
+  #app[data-skin="royal"]{--card-bg:#f3e8d8;--card-border:#cda449;--card-ink:#22204a;--card-red:#7a1220;--back-grad-1:#4a1942;--back-grad-2:#22091f;--back-border:#e8c876;--skin-glow:rgba(232,200,118,.5);}
+  #app[data-skin="neon"]{--card-bg:#12121c;--card-border:#37e6d6;--card-ink:#37e6d6;--card-red:#ff3d8a;--back-grad-1:#0d0d16;--back-grad-2:#000;--back-border:#ff3d8a;--skin-glow:rgba(55,230,214,.6);}
   #app[data-skin="neon"] .pcard{box-shadow:0 0 10px rgba(55,230,214,.55),0 3px 6px rgba(0,0,0,.5);}
   #app[data-skin="neon"] .card-back{box-shadow:0 0 10px rgba(255,61,138,.55);}
-  #app[data-skin="wood"]{--card-bg:#e8d3a5;--card-border:#6b4423;--card-ink:#4a2f18;--card-red:#8a3b24;--back-grad-1:#6b4423;--back-grad-2:#33200f;--back-border:#c99a55;}
-  #app[data-skin="gold"]{--card-bg:#fff3d0;--card-border:#a5822a;--card-ink:#1c1a12;--card-red:#8a1b1b;--back-grad-1:#d4af37;--back-grad-2:#7a5c14;--back-border:#fff3d0;}
+  #app[data-skin="wood"]{--card-bg:#e8d3a5;--card-border:#6b4423;--card-ink:#4a2f18;--card-red:#8a3b24;--back-grad-1:#6b4423;--back-grad-2:#33200f;--back-border:#c99a55;--skin-glow:rgba(201,154,85,.45);}
+  #app[data-skin="gold"]{--card-bg:#fff3d0;--card-border:#a5822a;--card-ink:#1c1a12;--card-red:#8a1b1b;--back-grad-1:#d4af37;--back-grad-2:#7a5c14;--back-border:#fff3d0;--skin-glow:rgba(242,212,136,.6);}
   #app[data-skin="gold"] .pcard{box-shadow:0 0 8px rgba(242,212,136,.5),0 3px 6px rgba(0,0,0,.4);}
-  #app[data-skin="black"]{--card-bg:#181818;--card-border:#4a4a4a;--card-ink:#f1e9d8;--card-red:#e0524a;--back-grad-1:#2a2a2a;--back-grad-2:#080808;--back-border:#9a9a9a;}
-  #app[data-skin="iranian"]{--card-bg:#f3ecd6;--card-border:#1f6f78;--card-ink:#6b1420;--card-red:#1f6f78;--back-grad-1:#1f6f78;--back-grad-2:#5c1a15;--back-border:#cda449;}
+  #app[data-skin="black"]{--card-bg:#181818;--card-border:#4a4a4a;--card-ink:#f1e9d8;--card-red:#e0524a;--back-grad-1:#2a2a2a;--back-grad-2:#080808;--back-border:#9a9a9a;--skin-glow:rgba(200,200,200,.4);}
+  #app[data-skin="iranian"]{--card-bg:#f3ecd6;--card-border:#1f6f78;--card-ink:#6b1420;--card-red:#1f6f78;--back-grad-1:#1f6f78;--back-grad-2:#5c1a15;--back-border:#cda449;--skin-glow:rgba(31,111,120,.5);}
+
+  /* ---- mythic skin: "حکمِ افسانه‌ای" — Simurgh ink, old gold, deep jade ---- */
+  #app[data-skin="mythic"]{
+    --card-bg:#f6ecd2;--card-border:#8a6a2a;--card-ink:#241608;--card-red:#7a1f1f;
+    --back-grad-1:#0e2b22;--back-grad-2:#040f0b;--back-border:#e3bf6b;
+    --skin-glow:rgba(227,191,107,.55);--skin-particle:#e9c977;
+  }
+  #app[data-skin="mythic"] .pcard{box-shadow:0 0 12px rgba(227,191,107,.4),0 3px 8px rgba(0,0,0,.55) inset,0 3px 6px rgba(0,0,0,.4);border-color:#a5822a;}
+  #app[data-skin="mythic"] .trump-suit{box-shadow:0 0 0 1px var(--gold-bright),0 0 16px 3px rgba(227,191,107,.75),0 3px 6px rgba(0,0,0,.4);animation:trumpHalo 2.4s ease-in-out infinite;}
+  @keyframes trumpHalo{0%,100%{box-shadow:0 0 0 1px var(--gold-bright),0 0 12px 2px rgba(227,191,107,.6),0 3px 6px rgba(0,0,0,.4);}50%{box-shadow:0 0 0 1px var(--gold-bright),0 0 22px 6px rgba(227,191,107,.9),0 3px 6px rgba(0,0,0,.4);}}
+  /* mythic suit glyphs: shamshir / gol-e-anar / negin / sarv, replacing ♠♥♦♣ visually only for this skin */
+  #app[data-skin="mythic"] .pcard .s{font-size:0;}
+  #app[data-skin="mythic"] .pcard .s::after{font-size:17px;display:inline-block;}
+  #app[data-skin="mythic"] .pcard .s[data-suit="S"]::after{content:'⚔';color:#241608;}
+  #app[data-skin="mythic"] .pcard.red .s[data-suit="H"]::after{content:'❀';color:#7a1f1f;}
+  #app[data-skin="mythic"] .pcard.red .s[data-suit="D"]::after{content:'✦';color:#7a1f1f;}
+  #app[data-skin="mythic"] .pcard .s[data-suit="C"]::after{content:'❧';color:#241608;}
+  /* ornate ink-and-gold card back with a medallion motif */
+  #app[data-skin="mythic"] .card-back{
+    background:
+      radial-gradient(circle at 50% 50%, rgba(227,191,107,.28), transparent 58%),
+      repeating-linear-gradient(45deg, rgba(227,191,107,.07) 0 2px, transparent 2px 9px),
+      linear-gradient(160deg,var(--back-grad-1),var(--back-grad-2));
+  }
+  #app[data-skin="mythic"] .card-back::after{
+    inset:5px;border:1px solid rgba(227,191,107,.7);border-radius:4px;
+    box-shadow:inset 0 0 0 1px rgba(227,191,107,.25),inset 0 0 10px rgba(227,191,107,.35);
+  }
+  #app[data-skin="mythic"] .card-back::before{
+    content:'✦';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:13px;color:rgba(227,191,107,.85);text-shadow:0 0 6px rgba(227,191,107,.6);
+  }
+
+  /* ---- inkveil skin: "پشتِ کارتِ جوهر سیاه" — silver ink on jet black, splash-back product ---- */
+  #app[data-skin="inkveil"]{
+    --card-bg:#161616;--card-border:#4a4a4a;--card-ink:#e9e4d6;--card-red:#c94b4b;
+    --back-grad-1:#050505;--back-grad-2:#000;--back-border:#3a3a3a;
+    --skin-glow:rgba(230,230,230,.35);--skin-particle:#1a1a1a;
+  }
+  #app[data-skin="inkveil"] .pcard{box-shadow:0 0 10px rgba(200,200,200,.25),0 3px 6px rgba(0,0,0,.6);}
+  #app[data-skin="inkveil"] .card-back{
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,.1), transparent 40%),
+      radial-gradient(circle at 68% 72%, rgba(255,255,255,.06), transparent 35%),
+      linear-gradient(160deg,var(--back-grad-1),var(--back-grad-2));
+  }
+  #app[data-skin="inkveil"] .card-back::after{border-color:rgba(230,230,230,.35);box-shadow:inset 0 0 10px rgba(255,255,255,.08);}
+  #app[data-skin="inkveil"] .card-back::before{
+    content:'';position:absolute;inset:0;border-radius:inherit;
+    background-image:radial-gradient(circle, rgba(230,230,230,.55) 1px, transparent 1.3px),radial-gradient(circle, rgba(230,230,230,.4) 1px, transparent 1.3px);
+    background-size:9px 9px, 13px 13px;background-position:2px 3px, 6px 9px;opacity:.5;
+  }
 
   /* ---- table felts ---- */
   #app[data-table="cafe"]{--felt-1:#6b4023;--felt-2:#3a2414;--felt-edge:#20140c;--table-border:#8a6a3a;}
@@ -50,15 +104,82 @@
   #app[data-table="stone"]{--felt-1:#54545a;--felt-2:#2c2c30;--felt-edge:#17171a;--table-border:#8a8a90;}
   #app[data-table="marble"]{--felt-1:#d8d3c8;--felt-2:#a8a196;--felt-edge:#6e675c;--table-border:#b8ab8a;}
   #app[data-table="luxury"]{--felt-1:#1c1410;--felt-2:#0a0705;--felt-edge:#000;--table-border:#f2d488;--table-outline:#f2d488;}
+  #app[data-table="ember"]{--felt-1:#3a0f05;--felt-2:#170502;--felt-edge:#0a0100;--table-border:#c9481a;--table-outline:#ff9a3d;}
+  #app[data-table="ember"] .felt{animation:emberPulse 3.4s ease-in-out infinite;}
+  @keyframes emberPulse{
+    0%,100%{box-shadow:0 20px 50px rgba(0,0,0,.55), inset 0 0 100px rgba(0,0,0,.55), 0 0 26px rgba(255,122,26,.35);}
+    50%{box-shadow:0 20px 50px rgba(0,0,0,.55), inset 0 0 100px rgba(0,0,0,.55), 0 0 46px rgba(255,122,26,.65);}
+  }
+  #app[data-table="ember"] .felt::before{
+    background-image:radial-gradient(circle at 30% 70%, rgba(255,154,61,.18), transparent 45%),radial-gradient(circle at 70% 30%, rgba(255,90,10,.15), transparent 45%);
+    opacity:1;
+  }
   #app[data-table="luxury"] .felt{box-shadow:0 20px 60px rgba(0,0,0,.65), inset 0 0 120px rgba(0,0,0,.6), 0 0 40px rgba(242,212,136,.25);}
+  /* table textures — each felt genuinely changes material, not just color */
+  #app[data-table="wood"] .felt::before, #app[data-table="cafe"] .felt::before{
+    background-image:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.12) 0 3px, transparent 3px 26px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 26px);
+    background-size:auto;
+  }
+  #app[data-table="stone"] .felt::before{
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,.08) 0 2px, transparent 3px),
+      radial-gradient(circle at 60% 70%, rgba(0,0,0,.18) 0 3px, transparent 4px),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,.06) 0 2px, transparent 3px),
+      radial-gradient(circle at 40% 85%, rgba(0,0,0,.14) 0 2px, transparent 3px);
+    background-size:70px 70px,90px 90px,60px 60px,80px 80px;
+  }
+  #app[data-table="marble"] .felt::before{
+    background-image:
+      linear-gradient(115deg, transparent 40%, rgba(120,110,95,.25) 41%, transparent 43%),
+      linear-gradient(70deg, transparent 55%, rgba(120,110,95,.2) 56%, transparent 58%),
+      linear-gradient(20deg, transparent 25%, rgba(120,110,95,.18) 26%, transparent 28%);
+    background-size:auto;
+  }
+  #app[data-table="persian-rug"] .felt::before{opacity:1;animation:rugDrift 14s linear infinite;}
+  @keyframes rugDrift{
+    0%{background-position:0 0, 0 0, 13px 13px;}
+    100%{background-position:104px 0, -104px 0, 117px 13px;}
+  }
+  #app[data-table="persian-rug"] .rug-medallion{animation:rugSpin 90s linear infinite;}
+  @keyframes rugSpin{to{transform:translate(-50%,-50%) rotate(360deg);}}
+  /* soft light falling from above, drifting very gently for a living-room feel */
+  #app[data-table="persian-rug"] .felt{position:relative;}
+  #app[data-table="persian-rug"] .table-wrap::before{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:2;border-radius:50%/45%;
+    background:radial-gradient(ellipse 60% 40% at var(--lx,50%) 8%, rgba(255,244,214,.16), transparent 60%);
+    animation:lightDrift 9s ease-in-out infinite;
+  }
+  @keyframes lightDrift{0%,100%{--lx:46%;}50%{--lx:54%;}}
+  /* mythic atmosphere: drifting gold dust over the felt, only when the mythic skin is active */
+  #app[data-skin="mythic"] .table-wrap::after{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:2;border-radius:50%/45%;
+    background-image:
+      radial-gradient(circle, rgba(233,201,119,.9) 1px, transparent 1.4px),
+      radial-gradient(circle, rgba(233,201,119,.7) 1px, transparent 1.4px),
+      radial-gradient(circle, rgba(233,201,119,.6) 1px, transparent 1.4px);
+    background-size:180px 180px, 240px 240px, 210px 210px;
+    background-position:20px 30px, 120px 160px, 60px 220px;
+    animation:dustDrift 22s linear infinite;
+    opacity:.55;
+  }
+  @keyframes dustDrift{0%{background-position:20px 30px, 120px 160px, 60px 220px;}100%{background-position:20px 330px, -120px 160px, 360px -80px;}}
+  #app[data-table="luxury"] .felt::before{
+    background-image:repeating-conic-gradient(from 0deg, rgba(242,212,136,.06) 0deg 8deg, transparent 8deg 16deg);
+    background-size:auto;
+  }
   html,body{margin:0;padding:0;height:100%;}
+  html{ overscroll-behavior-y:none; }
   body{
     font-family:'Vazirmatn',sans-serif;
     background:
       radial-gradient(ellipse at 50% 0%, #2c1712 0%, #170d0a 55%, #0c0605 100%);
     color:var(--cream);
     min-height:100vh;
+    min-height:100dvh; /* iOS/Android address-bar-safe viewport height */
     overflow-x:hidden;
+    overscroll-behavior-y:none; /* stop pull-to-refresh from fighting card drags */
     -webkit-tap-highlight-color:transparent;
     transition:background .5s ease;
   }
@@ -74,6 +195,7 @@
     background-size:120px 120px, 160px 160px, 140px 140px, 150px 150px, auto;
   }
   body[data-bg="shahanshahi"]{background:radial-gradient(ellipse at 50% 0%, #2a1442 0%, #180a28 55%, #0d0616 100%);}
+  body[data-bg="simurgh"]{background:radial-gradient(ellipse at 50% 0%, #123a2c 0%, #0a2018 55%, #05110c 100%);}
 
   .avatar{
     width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
@@ -83,7 +205,16 @@
   .avatar.frame-lion{border-color:#c98a2e;box-shadow:0 0 8px rgba(201,138,46,.65);}
   .avatar.frame-shahanshahi{border-color:#b072e0;box-shadow:0 0 8px rgba(176,114,224,.65);}
   .avatar.frame-galaxy{border-color:#6f7bf0;box-shadow:0 0 10px rgba(111,123,240,.75);}
-  #app{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:10px 8px 18px;}
+  .avatar.frame-simurgh{border-color:#e3bf6b;animation:simurghHalo 2.6s ease-in-out infinite;}
+  @keyframes simurghHalo{
+    0%,100%{box-shadow:0 0 8px rgba(227,191,107,.55),0 0 0 2px rgba(227,191,107,.25);}
+    50%{box-shadow:0 0 18px rgba(227,191,107,.9),0 0 0 3px rgba(227,191,107,.4);}
+  }
+  #app{
+    position:relative;min-height:100vh;min-height:100dvh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(10px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+  }
 
   /* header */
   .topbar{width:100%;max-width:920px;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;}
@@ -99,10 +230,13 @@
     width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
     background:var(--panel);border:1px solid #2a4f3f;color:var(--gold-bright);font-size:16px;cursor:pointer;
   }
-  .icon-btn:hover{border-color:var(--gold);}
+  @media (hover:hover) and (pointer:fine){ .icon-btn:hover{border-color:var(--gold);} }
+  @media (max-width:640px){
+    .icon-btn{width:40px;height:40px;font-size:18px;} /* keep tap target >=40px on touch */
+  }
 
   /* settings panel */
-  .settings-box{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid #2a4f3f;border-radius:16px;padding:20px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  .settings-box{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid #2a4f3f;border-radius:16px;padding:20px;max-width:480px;width:100%;max-height:calc(100dvh - 32px);overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);margin:auto;}
   .settings-box h2{margin:0 0 14px;color:var(--gold-bright);font-size:20px;text-align:center;}
   .settings-section{margin-bottom:16px;}
   .settings-section h3{margin:0 0 8px;font-size:13px;color:#9db8ab;font-weight:600;}
@@ -118,7 +252,7 @@
   .profile-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
   .profile-row input{
     flex:1;background:rgba(0,0,0,.25);border:1px solid #2a4f3f;border-radius:8px;
-    padding:9px 12px;color:var(--cream);font-family:inherit;font-size:13px;
+    padding:9px 12px;color:var(--cream);font-family:inherit;font-size:16px;
   }
   .profile-row input:focus{outline:none;border-color:var(--gold);}
   .swatch-grid.small{grid-template-columns:repeat(6,1fr);}
@@ -223,50 +357,96 @@
   .trick-card.p-east{transform:translate(40%,-50%);}
   .trick-card.winner{filter:drop-shadow(0 0 10px var(--gold-bright));transform:translate(-50%,-50%) scale(1.15) !important;z-index:5;}
 
-  /* playing card */
+  /* playing card — real 3D depth: layered shadows for thickness, a
+     pointer-tracked holographic sheen, and a subtle idle "breathing" life */
   .pcard{
     width:52px;height:76px;border-radius:6px;background:var(--card-bg,var(--cream));
     border:1px solid var(--card-border,#b9a97a);
     display:flex;flex-direction:column;justify-content:space-between;
-    padding:3px 5px;font-weight:700;box-shadow:0 3px 6px rgba(0,0,0,.4);
+    padding:3px 5px;font-weight:700;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.5) inset,
+      0 -6px 10px -6px rgba(0,0,0,.35) inset,
+      0 3px 0 rgba(0,0,0,.18),
+      0 3px 6px rgba(0,0,0,.4);
     color:var(--card-ink,var(--ink));
     direction:ltr;
+    position:relative;overflow:hidden;
+    transform-style:preserve-3d;
+    will-change:transform;
   }
   .pcard .r{font-size:14px;line-height:1;text-align:left;}
   .pcard .r:last-child{align-self:flex-end;}
   .pcard .s{font-size:16px;align-self:center;}
   .pcard.red{color:var(--card-red,var(--maroon));}
+  /* holographic sheen — a soft spotlight that follows the pointer
+     (--mx/--my, set by JS) plus a diagonal glare band */
+  .pcard::after{
+    content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+    background:
+      radial-gradient(circle at var(--mx,50%) var(--my,25%), rgba(255,255,255,.75), rgba(255,255,255,0) 45%),
+      linear-gradient(115deg, transparent 38%, rgba(255,255,255,.4) 50%, transparent 62%);
+    background-position:0 0, var(--shine,-140%) 0;
+    mix-blend-mode:overlay;
+    opacity:0;transition:opacity .28s ease;
+  }
+  .hand .pcard:hover::after, .hand .pcard.selected::after{opacity:1;}
 
   /* south hand */
   .hand{
     position:relative;display:flex;justify-content:center;
     height:96px;margin-top:8px;width:100%;
+    perspective:900px;
   }
   .hand .pcard{
     position:absolute;bottom:0;cursor:pointer;
-    transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(0);
+    transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(0) translateZ(0)
+               rotateX(var(--tiltY,0deg)) rotateY(var(--tiltX,0deg));
     transition:transform .18s ease, box-shadow .18s ease;
     width:54px;height:78px;
     touch-action:none;
   }
   .hand .pcard:hover:not(.disabled):not(.dragging):not(.selected){
-    transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(-14px);
-    box-shadow:0 8px 14px rgba(0,0,0,.5);
+    transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(-14px) translateZ(30px)
+               rotateX(var(--tiltY,0deg)) rotateY(var(--tiltX,0deg)) scale(1.05);
+    box-shadow:0 14px 22px rgba(0,0,0,.55), 0 0 16px var(--skin-glow,rgba(242,212,136,.35));
   }
   .hand .pcard.selected{
-    transform: translateX(var(--tx,0px)) rotate(0deg) translateY(-30px) scale(1.06);
-    box-shadow:0 0 0 2px var(--gold-bright), 0 12px 22px rgba(0,0,0,.55);
+    transform: translateX(var(--tx,0px)) rotate(0deg) translateY(-30px) translateZ(46px) scale(1.08);
+    box-shadow:0 0 0 2px var(--gold-bright), 0 16px 26px rgba(0,0,0,.6), 0 0 22px var(--skin-glow,rgba(242,212,136,.45));
     z-index:80 !important;
   }
   .hand .pcard.dragging{transition:none;z-index:200 !important;}
   .hand .pcard.disabled{opacity:.45;cursor:not-allowed;}
+  /* idle "alive" breathing — gentle, staggered per card, off while
+     hovered/selected/dragged/disabled so it never fights those states */
+  @keyframes cardBreathe{
+    0%,100%{ transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(0) rotateX(0deg) rotateY(0deg); }
+    50%{ transform: translateX(var(--tx,0px)) rotate(var(--rot,0deg)) translateY(-3px) rotateX(3deg) rotateY(1deg); }
+  }
+  .hand .pcard:not(.dragging):not(.selected):not(.disabled):not(:hover){
+    animation:cardBreathe 3.6s ease-in-out infinite;
+    animation-delay:var(--bd,0s);
+  }
+  /* face-down cards in opponents' hands breathe too, much more subtly */
+  @keyframes backBreathe{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-1.5px) rotate(.6deg);}}
+  .back-fan .card-back{animation:backBreathe 4.2s ease-in-out infinite;animation-delay:var(--bd,0s);}
+  .trick-card .pcard{animation:none;}
 
   /* overlays */
   .overlay{
     position:fixed;inset:0;background:rgba(4,8,6,.72);
-    display:flex;align-items:center;justify-content:center;z-index:20;padding:16px;
+    display:flex;align-items:center;justify-content:center;z-index:20;
+    padding:calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    overflow-y:auto; /* so tall panels can still be reached on short/landscape phones */
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    transition:background .3s ease, backdrop-filter .3s ease;
   }
+  /* theme/shop tab: keep the backdrop light so the table + cards behind
+     the panel stay visible — that's what makes the swatch hover a real
+     "live preview" instead of just a color chip */
+  .overlay.preview-mode{background:rgba(4,8,6,.28);backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);}
+  .preview-hint{font-size:11px;color:#9db8ab;text-align:center;margin:-4px 0 12px;line-height:1.7;}
 
   @keyframes shakeCard{
     0%,100%{transform:translateX(var(--tx,0px)) rotate(var(--rot,0deg));}
@@ -280,16 +460,50 @@
   .particle-layer{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:visible;}
   .particle{
     position:absolute;top:50%;left:50%;width:6px;height:6px;border-radius:50%;
-    background:var(--gold-bright);
+    background:var(--skin-particle,var(--gold-bright));
     animation:particleFly .7s ease-out forwards;
   }
   @keyframes particleFly{
     0%{opacity:1;transform:translate(-50%,-50%) translate(0,0) scale(1);}
     100%{opacity:0;transform:translate(-50%,-50%) translate(var(--px),var(--py)) scale(.3);}
   }
+
+  /* ---- VFX canvas: card-play trails, trick-win sparkle, kot confetti ---- */
+  .vfx-canvas{position:absolute;inset:0;z-index:7;pointer-events:none;}
+
+  /* light wave that sweeps across the felt when a trick is won */
+  .felt-sweep{
+    position:absolute;top:50%;left:50%;width:10px;height:10px;border-radius:50%;
+    transform:translate(-50%,-50%);pointer-events:none;z-index:2;
+    border:2px solid var(--skin-glow,var(--gold-bright));
+    box-shadow:0 0 24px 6px var(--skin-glow,var(--gold-bright));
+    opacity:0;
+  }
+  .felt-sweep.go{animation:feltSweep .85s cubic-bezier(.2,.7,.3,1) forwards;}
+  @keyframes feltSweep{
+    0%{width:10px;height:10px;opacity:.9;}
+    100%{width:640px;height:640px;opacity:0;}
+  }
+
+  /* flying "ghost" card used for the play-trail animation */
+  .fly-card{position:fixed;z-index:300;pointer-events:none;left:0;top:0;
+    transition:transform .46s cubic-bezier(.2,.65,.25,1), opacity .46s ease;
+    will-change:transform,opacity;
+  }
+  /* Simurgh talisman: wings sprout from the card while it flies to the table */
+  #app[data-skin="mythic"] .fly-card::before, #app[data-skin="mythic"] .fly-card::after{
+    content:'';position:absolute;top:50%;width:20px;height:12px;
+    background:radial-gradient(ellipse at 50% 50%, rgba(227,191,107,.9), rgba(227,191,107,0) 72%);
+    opacity:0;animation:wingSprout .46s ease-out forwards;
+  }
+  #app[data-skin="mythic"] .fly-card::before{left:-16px;border-radius:60% 10% 60% 10%;animation-name:wingSproutL;}
+  #app[data-skin="mythic"] .fly-card::after{right:-16px;border-radius:10% 60% 10% 60%;animation-name:wingSproutR;}
+  @keyframes wingSproutL{0%{opacity:0;transform:translateY(-50%) translateX(6px) scale(.3) rotate(10deg);}40%{opacity:.9;}100%{opacity:0;transform:translateY(-50%) translateX(-10px) scale(1.15) rotate(-14deg);}}
+  @keyframes wingSproutR{0%{opacity:0;transform:translateY(-50%) translateX(-6px) scale(.3) rotate(-10deg);}40%{opacity:.9;}100%{opacity:0;transform:translateY(-50%) translateX(10px) scale(1.15) rotate(14deg);}}
   .card-box{
     background:linear-gradient(160deg,var(--panel-2),var(--panel));
     border:1px solid #2a4f3f;border-radius:16px;padding:26px 22px;max-width:420px;width:100%;
+    max-height:calc(100dvh - 32px);overflow-y:auto;margin:auto;
     text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6);
   }
   .card-box h2{margin:0 0 8px;color:var(--gold-bright);font-size:22px;}
@@ -300,21 +514,22 @@
     font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;
     box-shadow:0 4px 10px rgba(0,0,0,.3);
   }
-  .btn:hover{filter:brightness(1.06);}
+  @media (hover:hover) and (pointer:fine){ .btn:hover{filter:brightness(1.06);} }
   .suit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
   .suit-btn{
     display:flex;flex-direction:column;align-items:center;gap:4px;
     background:var(--panel);border:1px solid #2a4f3f;border-radius:12px;padding:12px 8px;
     cursor:pointer;color:var(--cream);font-weight:600;font-size:13px;
   }
-  .suit-btn:hover{border-color:var(--gold);}
+  @media (hover:hover) and (pointer:fine){ .suit-btn:hover{border-color:var(--gold);} }
   .suit-btn .sym{font-size:24px;}
   .my5{display:flex;gap:6px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;}
 
   .toast{
-    position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+    position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
     background:rgba(10,20,16,.92);border:1px solid var(--gold);color:var(--cream);
     padding:9px 18px;border-radius:999px;font-size:13px;z-index:30;
+    max-width:calc(100vw - 24px);
     box-shadow:0 6px 16px rgba(0,0,0,.5);
   }
   .footnote{max-width:920px;width:100%;text-align:center;color:#5f7a6d;font-size:11px;margin-top:14px;line-height:1.8;}
@@ -329,7 +544,7 @@
     background:var(--panel-2);border:1px solid #2a4f3f;border-radius:10px;padding:12px;
     color:var(--cream);font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;margin-bottom:10px;
   }
-  .auth-btn:hover{border-color:var(--gold);}
+  @media (hover:hover) and (pointer:fine){ .auth-btn:hover{border-color:var(--gold);} }
   .auth-btn.primary{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#2a1e0a;border:none;}
   .auth-divider{display:flex;align-items:center;gap:10px;color:#5a7266;font-size:11px;margin:14px 0;}
   .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#2a4f3f;}
@@ -353,7 +568,7 @@
     background:var(--panel);border:1px solid #2a4f3f;border-radius:12px;padding:14px 16px;
     cursor:pointer;color:var(--cream);text-align:right;
   }
-  .lobby-btn:hover{border-color:var(--gold);}
+  @media (hover:hover) and (pointer:fine){ .lobby-btn:hover{border-color:var(--gold);} }
   .lobby-btn .t{font-weight:700;font-size:14px;}
   .lobby-btn .d{font-size:11px;color:#9db8ab;margin-top:2px;}
   .lobby-btn.primary{background:linear-gradient(160deg,#1f4536,#173327);border-color:var(--gold);}
@@ -380,7 +595,7 @@
   .join-row{display:flex;gap:8px;width:100%;margin-bottom:10px;}
   .join-row input{
     flex:1;background:rgba(0,0,0,.25);border:1px solid #2a4f3f;border-radius:8px;
-    padding:11px 12px;color:var(--cream);font-family:inherit;font-size:15px;letter-spacing:3px;text-align:center;
+    padding:11px 12px;color:var(--cream);font-family:inherit;font-size:16px;letter-spacing:3px;text-align:center;
   }
   .join-row input:focus{outline:none;border-color:var(--gold);}
 
@@ -404,7 +619,7 @@
 
   .reconnect-banner{
     position:fixed;top:0;left:0;right:0;z-index:50;background:#7a1e1e;color:#fff;
-    text-align:center;padding:10px;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.4);
+    text-align:center;padding:calc(10px + env(safe-area-inset-top)) 10px 10px;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.4);
   }
 
   @media (max-width:640px){
@@ -419,6 +634,29 @@
     .hand .pcard{width:44px;height:64px;}
     .trick-card.p-west{transform:translate(-120%,-50%);}
     .trick-card.p-east{transform:translate(30%,-50%);}
+    .brand b{font-size:17px;}
+    .score-pill{font-size:12px;padding:5px 10px;}
+    .topbar{gap:6px;}
+  }
+  /* very narrow phones (e.g. small Android / iPhone SE portrait) */
+  @media (max-width:360px){
+    .name-tag{font-size:10.5px;padding:3px 8px;}
+    .medallion{width:42px;height:42px;font-size:18px;}
+    .pcard, .trick-card{width:36px;height:52px;}
+    .hand{height:68px;}
+    .hand .pcard{width:38px;height:56px;}
+    .card-back{width:20px;height:30px;}
+  }
+  /* short / landscape phones: table portrait ratio wastes height, so
+     let it size by height instead and compact the vertical chrome */
+  @media (max-height:480px) and (orientation:landscape){
+    #app{padding-top:6px;padding-bottom:6px;}
+    .topbar{margin-bottom:2px;}
+    .table-wrap{aspect-ratio:16/9;max-height:70dvh;width:auto;height:70dvh;}
+    .hand{height:64px;margin-top:4px;}
+    .hand .pcard{width:38px;height:56px;}
+    .medallion{width:38px;height:38px;font-size:16px;transform:translate(-50%,38px);}
+    .screen-wrap{margin-top:2vh;}
   }
 </style>
 </head>
@@ -470,6 +708,7 @@ const FRAMES = [
   {id:'lion', label:'شیر'},
   {id:'shahanshahi', label:'شاهنشاهی'},
   {id:'galaxy', label:'کهکشانی'},
+  {id:'simurgh', label:'قابِ افسانه'},
 ];
 const BACKGROUNDS = [
   {id:'default', label:'پیش‌فرض', c:'#2c1712'},
@@ -477,6 +716,7 @@ const BACKGROUNDS = [
   {id:'lion', label:'شیر', c:'#3a2a12'},
   {id:'galaxy', label:'کهکشانی', c:'#1b1240'},
   {id:'shahanshahi', label:'شاهنشاهی', c:'#2a1442'},
+  {id:'simurgh', label:'افسانه', c:'#0e2b22'},
 ];
 const SKINS = [
   {id:'classic', label:'کلاسیک', c1:'#f6efdc', c2:'#b9a97a'},
@@ -486,6 +726,8 @@ const SKINS = [
   {id:'gold', label:'طلایی', c1:'#fff3d0', c2:'#d4af37'},
   {id:'black', label:'مشکی', c1:'#181818', c2:'#9a9a9a'},
   {id:'iranian', label:'ایرانی', c1:'#f3ecd6', c2:'#1f6f78'},
+  {id:'mythic', label:'حکمِ افسانه‌ای', c1:'#f6ecd2', c2:'#0e2b22'},
+  {id:'inkveil', label:'جوهرِ سیاه', c1:'#161616', c2:'#e9e4d6'},
 ];
 const TABLES = [
   {id:'cafe', label:'کافه', c1:'#6b4023', c2:'#3a2414'},
@@ -494,6 +736,7 @@ const TABLES = [
   {id:'marble', label:'مرمر', c1:'#d8d3c8', c2:'#a8a196'},
   {id:'persian-rug', label:'فرش ایرانی', c1:'#8a2c22', c2:'#5c1a15'},
   {id:'luxury', label:'لوکس', c1:'#1c1410', c2:'#f2d488'},
+  {id:'ember', label:'نمدِ آتشین', c1:'#3a0f05', c2:'#ff9a3d'},
 ];
 let toastTimer=null;
 function showToast(msg){
@@ -681,6 +924,7 @@ function handleServerMessage(msg){
 
 function applyGameState(msg){
   const hadWinner = !!state.trickWinnerSeat;
+  const wasHandEnd = state.phase==='hand-end';
   clearInterval(state.mmTimer);
   state.screen = 'game';
   state.reconnecting = false;
@@ -702,6 +946,14 @@ function applyGameState(msg){
   state.selectedIndex = null;
   if(!hadWinner && state.trickWinnerSeat){
     setTimeout(spawnParticles, 0);
+    setTimeout(triggerFeltSweep, 0);
+  }
+  // "سور" (kot): the hand just ended and the losing team took zero tricks
+  if(!wasHandEnd && state.phase==='hand-end'){
+    const {A,B} = state.tricksWon || {A:0,B:0};
+    if((A===0 || B===0) && (A+B)>0){
+      setTimeout(vfxKotExplosion, 250);
+    }
   }
 }
 
@@ -826,6 +1078,261 @@ function spawnParticles(){
   }
 }
 
+/* ==========================================================
+   VFX ENGINE — one lightweight canvas particle system shared by:
+     1) card-play dust trail (flyCardToCenter)
+     2) trick-win light sweep + sparkle burst
+     3) "kot/سور" full-sweep celebration explosion (confetti)
+   Stays idle (no rAF loop, no draws) whenever there are zero
+   live particles, so it costs nothing during normal play.
+   ========================================================== */
+const VFX = { particles: [], canvas:null, ctx:null, raf:null, w:0, h:0 };
+
+/* ==========================================================
+   SFX ENGINE — tiny synthesized sound set (Web Audio API, no
+   audio files to fetch/host). Everything is generated from
+   oscillators + a filtered noise burst, tuned to loosely evoke
+   santur/tar plucks and a frame-drum thud so it fits the mythic
+   atmosphere instead of sounding like generic UI beeps.
+   ========================================================== */
+const SFX = { ctx:null, muted:(function(){ try{ return localStorage.getItem('hokm_muted')==='1'; }catch(e){ return false; } })() };
+function sfxCtx(){
+  if(SFX.muted) return null;
+  if(!SFX.ctx){
+    try{ SFX.ctx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  if(SFX.ctx.state==='suspended') SFX.ctx.resume();
+  return SFX.ctx;
+}
+function sfxTone(freq, opts){
+  const o = Object.assign({type:'sine', dur:.25, gain:.16, delay:0, attack:.006, decay:.2}, opts||{});
+  const ctx = sfxCtx(); if(!ctx) return;
+  const t0 = ctx.currentTime + o.delay;
+  const osc = ctx.createOscillator(), g = ctx.createGain();
+  osc.type = o.type; osc.frequency.setValueAtTime(freq, t0);
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(o.gain, t0+o.attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+o.attack+o.decay+o.dur);
+  osc.connect(g); g.connect(ctx.destination);
+  osc.start(t0); osc.stop(t0+o.attack+o.decay+o.dur+0.05);
+}
+function sfxNoiseBurst(opts){
+  const o = Object.assign({dur:.12, gain:.12, delay:0, filterFreq:2200}, opts||{});
+  const ctx = sfxCtx(); if(!ctx) return;
+  const t0 = ctx.currentTime + o.delay;
+  const n = Math.max(1, Math.floor(ctx.sampleRate*o.dur));
+  const buffer = ctx.createBuffer(1, n, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<n;i++) data[i] = (Math.random()*2-1) * (1 - i/n);
+  const src = ctx.createBufferSource(); src.buffer = buffer;
+  const filt = ctx.createBiquadFilter(); filt.type='bandpass'; filt.frequency.value=o.filterFreq;
+  const g = ctx.createGain(); g.gain.setValueAtTime(o.gain, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0+o.dur);
+  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+  src.start(t0);
+}
+// soft pluck + air whoosh — plays the instant a card leaves the hand
+function sfxCardPlay(){ sfxNoiseBurst({dur:.08,gain:.09,filterFreq:3400}); sfxTone(560,{type:'triangle',dur:.05,gain:.045,decay:.05}); }
+// quiet tap for selecting/deselecting a card in hand
+function sfxCardTap(){ sfxTone(720,{type:'sine',dur:.03,gain:.03,decay:.03}); }
+// rising three-note chime when a trick is won, synced to the felt sweep
+function sfxTrickWin(){ [660,880,990].forEach((f,i)=>sfxTone(f,{type:'sine',dur:.28,gain:.08,delay:i*0.07,decay:.18})); }
+// shimmering high bell for the trump-card magic burst
+function sfxTrumpMagic(){ [990,1320,1760].forEach((f,i)=>sfxTone(f,{type:'sine',dur:.3,gain:.055,delay:i*0.05,decay:.22})); sfxNoiseBurst({dur:.15,gain:.045,filterFreq:6500}); }
+// deep gong + cascading chimes for a full sweep ("سور"/kot)
+function sfxKot(){
+  sfxTone(110,{type:'sine',dur:.9,gain:.15,decay:.6});
+  sfxTone(165,{type:'sine',dur:.7,gain:.08,decay:.5,delay:.02});
+  [220,330,440,550].forEach((f,i)=>sfxTone(f,{type:'triangle',dur:.4,gain:.055,delay:.15+i*0.09,decay:.25}));
+}
+
+function vfxAccentColor(){
+  // reads the current skin's glow color so every effect matches the
+  // equipped theme instead of always being gold
+  const app = document.getElementById('app');
+  const v = app && getComputedStyle(app).getPropertyValue('--skin-glow').trim();
+  return v || 'rgba(242,212,136,.6)';
+}
+function vfxEnsureCanvas(){
+  const c = document.querySelector('.vfx-canvas');
+  if(!c) return null;
+  if(VFX.canvas !== c){
+    VFX.canvas = c;
+    VFX.ctx = c.getContext('2d');
+  }
+  const wrap = document.querySelector('.table-wrap');
+  if(wrap){
+    const r = wrap.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    if(c.width !== Math.round(r.width*dpr) || c.height !== Math.round(r.height*dpr)){
+      c.width = Math.round(r.width*dpr);
+      c.height = Math.round(r.height*dpr);
+      VFX.ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    VFX.w = r.width; VFX.h = r.height;
+  }
+  return c;
+}
+function vfxSpawn(list){ VFX.particles.push(...list); vfxLoop(); }
+function vfxLoop(){
+  if(VFX.raf) return; // already running
+  const step = ()=>{
+    const c = vfxEnsureCanvas();
+    if(!c || !VFX.ctx){ VFX.raf=null; return; }
+    const ctx = VFX.ctx;
+    ctx.clearRect(0,0,VFX.w,VFX.h);
+    const now = performance.now();
+    VFX.particles = VFX.particles.filter(p=>now < p.until);
+    for(const p of VFX.particles){
+      const t = 1 - Math.max(0,(p.until-now))/p.life;   // 0..1 progress
+      p.x += p.vx; p.y += p.vy; p.vy += p.gravity||0;
+      p.vx *= (p.drag!=null?p.drag:0.985);
+      p.vy *= (p.drag!=null?p.drag:0.985);
+      p.rot = (p.rot||0) + (p.spin||0);
+      const alpha = Math.max(0, 1 - t);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(p.x, p.y);
+      if(p.rot) ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      if(p.shape==='rect'){
+        ctx.fillRect(-p.size/2, -p.size*0.35, p.size, p.size*0.7);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0,0,p.size*(1-t*0.4),0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    if(VFX.particles.length){
+      VFX.raf = requestAnimationFrame(step);
+    } else {
+      ctx.clearRect(0,0,VFX.w,VFX.h);
+      VFX.raf = null;
+    }
+  };
+  VFX.raf = requestAnimationFrame(step);
+}
+
+/* small trailing dust, used behind a flying card */
+function vfxTrail(xRatio, yRatio, color){
+  vfxEnsureCanvas();
+  const x = xRatio*VFX.w, y = yRatio*VFX.h;
+  const list = [];
+  for(let i=0;i<3;i++){
+    list.push({
+      x:x+(Math.random()-0.5)*6, y:y+(Math.random()-0.5)*6,
+      vx:(Math.random()-0.5)*0.6, vy:(Math.random()-0.5)*0.6,
+      gravity:0.01, drag:0.94, size:2+Math.random()*2.4,
+      color: color||vfxAccentColor(), life:520, until:performance.now()+520,
+    });
+  }
+  vfxSpawn(list);
+}
+
+/* sparkle burst at a point (0..1 ratios of table-wrap) — used for the
+   winning trick card, in addition to the felt light-sweep ring */
+function vfxSparkleBurst(xRatio, yRatio, color){
+  vfxEnsureCanvas();
+  const x = xRatio*VFX.w, y = yRatio*VFX.h;
+  const n = 20, list = [];
+  for(let i=0;i<n;i++){
+    const angle = (Math.PI*2*i)/n + Math.random()*0.4;
+    const speed = 1.4 + Math.random()*2.2;
+    list.push({
+      x, y, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed,
+      gravity:0.03, drag:0.965, size:2+Math.random()*2.6,
+      color: color||vfxAccentColor(), life:650+Math.random()*200, until:performance.now()+650+Math.random()*200,
+    });
+  }
+  vfxSpawn(list);
+}
+
+/* radial light wave across the felt when a trick is won */
+function triggerFeltSweep(){
+  const ring = document.querySelector('.felt-sweep');
+  if(!ring) return;
+  ring.classList.remove('go');
+  void ring.offsetWidth; // restart animation
+  ring.classList.add('go');
+  vfxSparkleBurst(0.5, 0.5);
+  sfxTrickWin();
+}
+
+/* big multi-colored confetti explosion for a full sweep ("kot"/"سور") —
+   winning every trick in the hand with the opponents left at zero */
+function vfxKotExplosion(){
+  vfxEnsureCanvas();
+  const colors = ['#f2d488','#cda449','#e05a5a','#5ac8e0','#8fe0a8','#e08fd0'];
+  const cx = VFX.w/2, cy = VFX.h*0.42;
+  const n = 90, list = [];
+  for(let i=0;i<n;i++){
+    const angle = Math.random()*Math.PI*2;
+    const speed = 2 + Math.random()*5.5;
+    list.push({
+      x:cx, y:cy, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed - 1.5,
+      gravity:0.09, drag:0.988,
+      size:3+Math.random()*4, shape: Math.random()<0.5?'rect':'circle',
+      rot:Math.random()*Math.PI, spin:(Math.random()-0.5)*0.35,
+      color: colors[i%colors.length],
+      life:1300+Math.random()*500, until:performance.now()+1300+Math.random()*500,
+    });
+  }
+  vfxSpawn(list);
+  sfxKot();
+  showToast('سور! 🎉 برد کامل این دست');
+}
+
+/* flying "ghost" card: clones the tapped card and animates it from the
+   hand to the middle of the table, trailing dust the whole way — this
+   plays instantly on tap, independent of the server round-trip */
+function flyCardToCenter(sourceEl, card){
+  const wrap = document.querySelector('.table-wrap');
+  if(!sourceEl || !wrap) return;
+  const startRect = sourceEl.getBoundingClientRect();
+  const wrapRect = wrap.getBoundingClientRect();
+  const ghost = sourceEl.cloneNode(true);
+  ghost.classList.add('fly-card');
+  ghost.style.width = startRect.width+'px';
+  ghost.style.height = startRect.height+'px';
+  ghost.style.transform = `translate(${startRect.left}px, ${startRect.top}px) rotate(0deg)`;
+  ghost.style.opacity = '1';
+  document.body.appendChild(ghost);
+  sfxCardPlay();
+
+  const endX = wrapRect.left + wrapRect.width*0.5 - startRect.width/2;
+  const endY = wrapRect.top + wrapRect.height*0.55 - startRect.height/2;
+  requestAnimationFrame(()=>{
+    ghost.style.transform = `translate(${endX}px, ${endY}px) rotate(${(Math.random()*40-20).toFixed(0)}deg) scale(.92)`;
+  });
+
+  // trailing dust sampled along the flight path
+  const steps = 10;
+  const color = vfxAccentColor();
+  for(let i=1;i<=steps;i++){
+    setTimeout(()=>{
+      const t = i/steps;
+      const px = startRect.left + (endX-startRect.left)*t + startRect.width/2;
+      const py = startRect.top + (endY-startRect.top)*t + startRect.height/2;
+      vfxTrail((px-wrapRect.left)/wrapRect.width, (py-wrapRect.top)/wrapRect.height, color);
+    }, i*40);
+  }
+  setTimeout(()=>{
+    ghost.style.opacity = '0';
+    setTimeout(()=>ghost.remove(), 200);
+  }, 380);
+
+  // magical burst when a trump card lands — the doc's "اثر جادویی"
+  if(card && state.trump && card.suit===state.trump){
+    setTimeout(()=>{
+      const cx = (endX + startRect.width/2 - wrapRect.left)/wrapRect.width;
+      const cy = (endY + startRect.height/2 - wrapRect.top)/wrapRect.height;
+      vfxSparkleBurst(cx, cy, color);
+      sfxTrumpMagic();
+    }, 380);
+  }
+}
+window.addEventListener('resize', ()=>{ vfxEnsureCanvas(); });
+
 /* ---------- seat helpers: rotate the table so mySeat always sits "south" (bottom) ---------- */
 function cssPosOf(seat){
   const my = state.mySeat || 'south';
@@ -838,16 +1345,17 @@ function cssPosOf(seat){
 /* ---------- render ---------- */
 function cardHTML(card, extraClass, dataAttr){
   const info = SUITS[card.suit];
-  const cls = info.color==='red' ? 'pcard red' : 'pcard';
+  const isTrump = state.trump && card.suit===state.trump;
+  const cls = (info.color==='red' ? 'pcard red' : 'pcard') + (isTrump ? ' trump-suit' : '');
   return `<div class="${cls} ${extraClass||''}" ${dataAttr||''}>
     <div class="r">${rankLabel(card.rank)}</div>
-    <div class="s">${info.symbol}</div>
+    <div class="s" data-suit="${card.suit}">${info.symbol}</div>
     <div class="r" style="align-self:flex-end;transform:rotate(180deg);">${rankLabel(card.rank)}</div>
   </div>`;
 }
 function backFanHTML(count){
   let html='';
-  for(let i=0;i<count;i++) html += `<div class="card-back"></div>`;
+  for(let i=0;i<count;i++) html += `<div class="card-back" style="--bd:${(i*0.16).toFixed(2)}s"></div>`;
   return html;
 }
 function medallionHTML(){
@@ -901,7 +1409,7 @@ function handHTML(){
     const selected = state.selectedIndex===i ? 'selected' : '';
     const shaking = state.shakeIndex===i ? 'shake' : '';
     const extra = `${disabled?'disabled':''} ${selected} ${shaking}`.trim();
-    return cardHTML(c, extra, `style="--tx:${offset}px;--rot:${rot}deg;z-index:${i}" data-card-index="${i}"`);
+    return cardHTML(c, extra, `style="--tx:${offset}px;--rot:${rot}deg;--bd:${(i*0.14).toFixed(2)}s;z-index:${i}" data-card-index="${i}"`);
   }).join('');
 }
 
@@ -943,11 +1451,12 @@ function settingsHTML(){
       <button class="btn" style="width:100%;background:var(--panel);color:var(--cream);border:1px solid #2a4f3f;" data-action="simulate-disconnect">${t('disconnect_test_btn','قطع واقعی اتصال (تست reconnect)')}</button>
     </div>`:''}`;
   const themeTab = `
+    <div class="preview-hint">✨ نگاهی به میز پشت این پنل بنداز — با هاور روی هر پوسته همین الان کارت‌ها و میز عوض می‌شن</div>
     <div class="settings-section">
       <h3>پوسته‌ی کارت</h3>
       <div class="swatch-grid">
         ${SKINS.map(sk=>`<div class="swatch ${state.skin===sk.id?'active':''}" data-set-skin="${sk.id}">
-          <div class="chip" style="background:linear-gradient(135deg,${sk.c1},${sk.c2})"></div>
+          <div class="chip" style="background:linear-gradient(135deg,${sk.c1},${sk.c2})">${state.skin===sk.id?'<span style="font-size:14px;">✓</span>':''}</div>
           <div class="lbl">${sk.label}</div>
         </div>`).join('')}
       </div>
@@ -956,7 +1465,7 @@ function settingsHTML(){
       <h3>میز بازی</h3>
       <div class="swatch-grid">
         ${TABLES.map(tb=>`<div class="swatch ${state.table===tb.id?'active':''}" data-set-table="${tb.id}">
-          <div class="chip" style="background:linear-gradient(135deg,${tb.c1},${tb.c2})"></div>
+          <div class="chip" style="background:linear-gradient(135deg,${tb.c1},${tb.c2})">${state.table===tb.id?'<span style="font-size:14px;">✓</span>':''}</div>
           <div class="lbl">${tb.label}</div>
         </div>`).join('')}
       </div>
@@ -972,7 +1481,7 @@ function settingsHTML(){
       </div>
     </div>`;
   const tabContent = tab==='profile' ? profileTab : tab==='lang' ? langTab : themeTab;
-  return `<div class="overlay"><div class="settings-box">
+  return `<div class="overlay ${tab==='theme'?'preview-mode':''}"><div class="settings-box">
     <h2>${t('settings_title','پروفایل و شخصی‌سازی')}</h2>
     <div class="settings-tabs">
       <div class="settings-tab ${tab==='profile'?'active':''}" data-set-tab="profile">${t('tab_profile','پروفایل')}</div>
@@ -1094,8 +1603,10 @@ function renderRoomWait(app){
 
 function render(){
   const app = document.getElementById('app');
-  app.dataset.skin = state.skin;
-  app.dataset.table = state.table;
+  // hovering a shop swatch previews it instantly on the real table/cards
+  // without committing — moving off the swatch reverts to the equipped one
+  app.dataset.skin = state.previewSkin || state.skin;
+  app.dataset.table = state.previewTable || state.table;
   document.body.dataset.bg = state.profile.background;
 
   if(state.screen==='login'){ renderLogin(app); renderGoogleButton(); return; }
@@ -1156,6 +1667,7 @@ function render(){
       <div class="topbar-actions">
         <div class="ping-badge ${typeof state.ping==='number'&&state.ping>150?'bad':''}"><span class="dot2"></span>${state.ping}</div>
         <div class="score-pill"><span class="a">${t('your_team','تیم شما')} ${state.roundsWon.A}</span><span class="sep">–</span><span class="b">${state.roundsWon.B} ${t('opponent','حریف')}</span></div>
+        <div class="icon-btn" data-action="toggle-mute" title="${t('mute_tooltip','صدا')}">${SFX.muted?'🔇':'🔊'}</div>
         <div class="icon-btn" data-action="open-settings" title="${t('tab_theme','پوسته و میز')}">⚙</div>
       </div>
     </div>
@@ -1166,6 +1678,8 @@ function render(){
       ${seatsHTML()}
       <div class="trick-area">${trickCardsHTML()}</div>
       <div class="particle-layer"></div>
+      <div class="felt-sweep"></div>
+      <canvas class="vfx-canvas"></canvas>
     </div>
     <div class="hand">${handHTML()}</div>
     <div class="footnote">${t('footnote_tricks','تیک‌های این دست — تیم شما: {a} \u00a0|\u00a0 حریف: {b}').replace('{a}',state.tricksWon.A).replace('{b}',state.tricksWon.B)}<br>${t('footnote_note','فاز ۴: ورود مهمان، اتاق خصوصی و بازی سریع روی سرور واقعی با WebSocket، پینگ واقعی و reconnect خودکار. سیستم رتبه‌بندی واقعی و اقتصاد بازی در فازهای بعدی.')}</div>
@@ -1196,12 +1710,14 @@ document.getElementById('app').addEventListener('click', (e)=>{
   if(disconnectBtn){ simulateDisconnect(); return; }
   const openSettings = e.target.closest('[data-action="open-settings"]');
   if(openSettings){ state.showSettings=true; render(); return; }
+  const toggleMute = e.target.closest('[data-action="toggle-mute"]');
+  if(toggleMute){ SFX.muted = !SFX.muted; try{ localStorage.setItem('hokm_muted', SFX.muted?'1':'0'); }catch(e){} render(); return; }
   const closeSettings = e.target.closest('[data-action="close-settings"]');
   if(closeSettings){ state.showSettings=false; render(); return; }
   const skinSwatch = e.target.closest('[data-set-skin]');
-  if(skinSwatch){ state.skin = skinSwatch.dataset.setSkin; render(); return; }
+  if(skinSwatch){ state.skin = skinSwatch.dataset.setSkin; state.previewSkin = null; showToast(t('skin_equipped','پوسته اعمال شد ✓')); render(); return; }
   const tableSwatch = e.target.closest('[data-set-table]');
-  if(tableSwatch){ state.table = tableSwatch.dataset.setTable; render(); return; }
+  if(tableSwatch){ state.table = tableSwatch.dataset.setTable; state.previewTable = null; showToast(t('table_equipped','میز اعمال شد ✓')); render(); return; }
   const tabBtn = e.target.closest('[data-set-tab]');
   if(tabBtn){ state.settingsTab = tabBtn.dataset.setTab; render(); return; }
   const langSwatch = e.target.closest('[data-set-lang]');
@@ -1220,6 +1736,30 @@ document.getElementById('app').addEventListener('click', (e)=>{
   if(trumpBtn){ sendChooseTrump(trumpBtn.dataset.chooseTrump); return; }
   const feltEl = e.target.closest('.felt, .rug-medallion, .trick-area');
   if(feltEl && state.selectedIndex!=null){ state.selectedIndex=null; render(); }
+});
+
+/* ---------- live shop preview: hovering a swatch previews it for real,
+   on the actual table/cards, without committing anything ---------- */
+document.getElementById('app').addEventListener('mouseover', (e)=>{
+  const skinSwatch = e.target.closest('[data-set-skin]');
+  if(skinSwatch){
+    if(state.previewSkin !== skinSwatch.dataset.setSkin){ state.previewSkin = skinSwatch.dataset.setSkin; render(); }
+    return;
+  }
+  const tableSwatch = e.target.closest('[data-set-table]');
+  if(tableSwatch && state.previewTable !== tableSwatch.dataset.setTable){
+    state.previewTable = tableSwatch.dataset.setTable; render();
+  }
+});
+document.getElementById('app').addEventListener('mouseout', (e)=>{
+  const leavingSkin = e.target.closest('[data-set-skin]');
+  if(leavingSkin && (!e.relatedTarget || !leavingSkin.contains(e.relatedTarget)) && state.previewSkin){
+    state.previewSkin = null; render();
+  }
+  const leavingTable = e.target.closest('[data-set-table]');
+  if(leavingTable && (!e.relatedTarget || !leavingTable.contains(e.relatedTarget)) && state.previewTable){
+    state.previewTable = null; render();
+  }
 });
 
 document.getElementById('app').addEventListener('input', (e)=>{
@@ -1244,14 +1784,39 @@ function handleCardTap(idx){
     return;
   }
   if(state.selectedIndex===idx){
+    const cardEl = document.querySelector(`.hand [data-card-index="${idx}"]`);
+    if(cardEl) flyCardToCenter(cardEl, card);
     sendPlayCard(card);
     state.selectedIndex = null;
     render();
   } else {
     state.selectedIndex = idx;
+    sfxCardTap();
     render();
   }
 }
+
+/* ---------- 3D holographic tilt/sheen (pointer-tracked) ---------- */
+document.addEventListener('pointermove', (e)=>{
+  const cardEl = e.target.closest && e.target.closest('.hand .pcard:not(.disabled)');
+  document.querySelectorAll('.hand .pcard.tilted').forEach(el=>{
+    if(el!==cardEl){
+      el.classList.remove('tilted');
+      el.style.removeProperty('--tiltX'); el.style.removeProperty('--tiltY');
+      el.style.removeProperty('--mx'); el.style.removeProperty('--my'); el.style.removeProperty('--shine');
+    }
+  });
+  if(!cardEl || drag) return;
+  const r = cardEl.getBoundingClientRect();
+  const px = (e.clientX - r.left) / r.width;   // 0..1
+  const py = (e.clientY - r.top) / r.height;   // 0..1
+  cardEl.classList.add('tilted');
+  cardEl.style.setProperty('--tiltX', `${(px-0.5)*18}deg`);
+  cardEl.style.setProperty('--tiltY', `${(0.5-py)*14}deg`);
+  cardEl.style.setProperty('--mx', `${px*100}%`);
+  cardEl.style.setProperty('--my', `${py*100}%`);
+  cardEl.style.setProperty('--shine', `${px*160-30}%`);
+}, {passive:true});
 
 let drag = null;
 document.addEventListener('pointerdown', (e)=>{

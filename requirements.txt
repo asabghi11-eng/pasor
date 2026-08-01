@@ -5,3 +5,4 @@ requests
 google-auth
 PyJWT
 psycopg2-binary  # only needed if you set DATABASE_URL (PostgreSQL); SQLite needs nothing extra
+redis  # only needed if you set REDIS_URL (multi-instance realtime); see hokm_realtime.py

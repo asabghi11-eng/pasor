@@ -40,7 +40,7 @@
 
   const CSS = `
   .hkv-fab {
-    position: fixed; bottom: 18px; inset-inline-end: 230px; z-index: 9998;
+    position: fixed; bottom: calc(18px + env(safe-area-inset-bottom)); inset-inline-end: calc(230px + env(safe-area-inset-right)); z-index: 9998;
     display: flex; align-items: center; gap: 8px;
     background: linear-gradient(135deg, #10241a, #143a28);
     border: 1px solid #3fd68a; border-radius: 999px;
@@ -48,7 +48,17 @@
     font-family: inherit; color: #d7ffe9; user-select: none;
     transition: transform .15s ease;
   }
-  .hkv-fab:hover { transform: translateY(-2px); }
+  @media (hover:hover) and (pointer:fine){ .hkv-fab:hover { transform: translateY(-2px); } }
+  @media (max-width:640px){
+    /* the 230px offset above only made sense next to a wide desktop economy
+       fab — on a phone it either collides with it or runs off-screen, so on
+       mobile just stack it into the same left-edge column instead */
+    .hkv-fab{
+      bottom: calc(130px + env(safe-area-inset-bottom));
+      inset-inline-end: calc(10px + env(safe-area-inset-right));
+      padding:6px 10px; gap:6px; font-size:12px;
+    }
+  }
   .hkv-fab.hkv-fab-active { border-color: #ffd76a; }
   .hkv-fab .hkv-fab-count {
     background: #3fd68a; color: #10241a; font-weight: 700; font-size: 11px;
@@ -71,7 +81,7 @@
   }
   .hkv-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #17422c; background: linear-gradient(135deg, #12291b, #0d2016); }
   .hkv-head h2 { margin: 0; font-size: 16px; }
-  .hkv-close { cursor: pointer; font-size: 20px; line-height: 1; color: #a9e8c8; background: none; border: none; }
+  .hkv-close { cursor: pointer; font-size: 20px; line-height: 1; color: #a9e8c8; background: none; border: none; width:44px; height:44px; display:flex; align-items:center; justify-content:center; margin:-10px; }
   .hkv-body { padding: 12px 16px; overflow-y: auto; flex: 1; }
 
   .hkv-toggle-btn {

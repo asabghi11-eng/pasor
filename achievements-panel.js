@@ -32,7 +32,7 @@
 
   const CSS = `
   .hka-fab {
-    position: fixed; bottom: 18px; inset-inline-end: 90px; z-index: 9998;
+    position: fixed; bottom: calc(228px + env(safe-area-inset-bottom)); inset-inline-end: calc(18px + env(safe-area-inset-right)); z-index: 9998;
     display: flex; align-items: center; justify-content: center;
     width: 46px; height: 46px;
     background: linear-gradient(135deg, #241a0f, #3a2712);
@@ -40,7 +40,14 @@
     cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,.4);
     font-size: 20px; user-select: none; transition: transform .15s ease;
   }
-  .hka-fab:hover { transform: translateY(-2px); }
+  @media (hover:hover) and (pointer:fine){ .hka-fab:hover { transform: translateY(-2px); } }
+  @media (max-width:640px){
+    .hka-fab{
+      bottom: calc(298px + env(safe-area-inset-bottom));
+      inset-inline-end: calc(10px + env(safe-area-inset-right));
+      width:40px; height:40px; font-size:17px;
+    }
+  }
   .hka-badge {
     position: absolute; top: -4px; inset-inline-end: -4px;
     background: #d94f4f; color: #fff; font-size: 11px; font-weight: 700;
@@ -69,7 +76,7 @@
     background: linear-gradient(135deg, #2a1d10, #1b140b);
   }
   .hka-head h2 { margin: 0; font-size: 16px; }
-  .hka-close { cursor: pointer; font-size: 20px; line-height: 1; color: #d8c39a; background: none; border: none; }
+  .hka-close { cursor: pointer; font-size: 20px; line-height: 1; color: #d8c39a; background: none; border: none; width:44px; height:44px; display:flex; align-items:center; justify-content:center; margin:-10px; }
   .hka-sub { padding: 8px 16px; font-size: 12px; color: #b7a071; border-bottom: 1px solid #3a2712; }
   .hka-body { overflow-y: auto; padding: 10px 12px 16px; display: flex; flex-direction: column; gap: 8px; }
 

@@ -70,6 +70,7 @@ import hokm_i18n as I18N
 import hokm_regions as REG
 import hokm_worldcup as WC
 import hokm_storage as DB
+import hokm_realtime as RT
 import hokm_auth as AUTH
 import hokm_payments as PAY
 import hokm_achievements as ACH
@@ -95,7 +96,23 @@ async def _load_persisted_players():
         SESSION_TO_PLAYER[token] = pid
         if p.google_id:
             GOOGLE_TO_PLAYER[p.google_id] = pid
+    for rid, data in DB.load_all_rooms():
+        try:
+            room = row_to_room(data)
+        except TypeError:
+            continue  # a saved shape from an older version of Room — skip rather than crash startup
+        ROOMS[rid] = room
+        if room.code:
+            CODE_TO_ROOM[room.code] = rid
     asyncio.create_task(autosave_loop())
+
+    # Multi-instance (opt-in via REDIS_URL — see hokm_realtime.py docstring):
+    # distributed room lock + cross-instance live-state push. A no-op,
+    # and every call below a no-op, when REDIS_URL isn't set.
+    await RT.init()
+    if RT.is_enabled():
+        RT.set_refresh_hook(_refresh_room_from_db)
+        await RT.start_listener(_on_remote_room_update)
 
 
 @app.on_event("shutdown")
@@ -105,7 +122,13 @@ async def _flush_persisted_players():
             save_player(p)
         except Exception:
             pass
+    for room in list(ROOMS.values()):
+        try:
+            save_room_state(room)
+        except Exception:
+            pass
     DB.close()
+    await RT.close()
 
 
 GRACE_SECONDS = float(os.environ.get("HOKM_GRACE_SECONDS", 20))          # how long we wait for a disconnected human before a bot covers their turn
@@ -225,11 +248,14 @@ class WorldCup:
     created_at: str = field(default_factory=lambda: datetime.datetime.utcnow().isoformat())
 
 
-# Fields NOT persisted: ws/connected/room_id/seat (runtime-only — a
-# player always reloads into the lobby, never mid-match) and action_log
-# (a rolling rate-limit window, meaningless after a restart).
+# Fields NOT persisted: ws/connected (runtime-only, always reset on
+# reload — a fresh process has no live socket) and action_log (a rolling
+# rate-limit window, meaningless after a restart). room_id/seat ARE
+# persisted now that Room state is saved too (see save_room_state below):
+# on reconnect, PLAYERS[pid].room_id routes the player straight back into
+# their in-progress match instead of always dropping them at the lobby.
 _PERSISTED_SET_FIELDS = ("inventory", "friends", "bp_claimed_free", "bp_claimed_premium", "achievements_claimed")
-_PERSISTED_SKIP_FIELDS = {"ws", "connected", "room_id", "seat", "action_log"}
+_PERSISTED_SKIP_FIELDS = {"ws", "connected", "action_log"}
 
 
 def player_to_row(p: "Player") -> dict:
@@ -247,7 +273,7 @@ def row_to_player(data: dict) -> "Player":
     for f in _PERSISTED_SET_FIELDS:
         if f in data:
             data[f] = set(data[f])
-    return Player(ws=None, connected=False, room_id=None, seat=None, **data)
+    return Player(ws=None, connected=False, **data)
 
 
 def save_player(p: "Player"):
@@ -373,6 +399,139 @@ class Room:
     def bump_token(self) -> int:
         self.turn_token += 1
         return self.turn_token
+
+
+# Fields persisted for a live room: everything needed to reconstruct the
+# match exactly as it was (seats, deal, trump, trick-in-progress, score,
+# chat/replay logs). Fields NOT persisted, because they're either
+# runtime-only synchronization primitives or session state that's safe
+# (even correct) to drop across a restart:
+#   - lock: an asyncio.Lock can't be serialized and wouldn't mean anything
+#     in a fresh process anyway — a new one is created when the Room is
+#     rebuilt.
+#   - analysis_tasks: in-flight background minimax analysis. Safe to lose;
+#     it isn't gameplay state, just a nice-to-have summary computed after
+#     the fact.
+#   - voice_participants: WebRTC signaling state tied to the sockets that
+#     no longer exist after a restart. Reconnecting players simply toggle
+#     their mic back on.
+_ROOM_PERSISTED_FIELDS = (
+    "id", "seats", "code", "phase", "hands", "deck", "hakem", "trump",
+    "current_trick", "trick_leader", "turn", "tricks_won", "rounds_won",
+    "trick_winner_seat", "hand_winner_team", "match_winner_team", "match_id",
+    "spectators", "chat_log", "hand_log", "match_log", "decisions",
+)
+
+
+def room_to_row(room: "Room") -> dict:
+    data = {}
+    for f in _ROOM_PERSISTED_FIELDS:
+        v = getattr(room, f)
+        data[f] = sorted(v) if isinstance(v, set) else v
+    return data
+
+
+def row_to_room(data: dict) -> "Room":
+    data = dict(data)  # don't mutate the caller's dict
+    if "spectators" in data:
+        data["spectators"] = set(data["spectators"])
+    return Room(**data)
+
+
+def save_room_state(room: "Room"):
+    try:
+        DB.save_room(room.id, room_to_row(room), code=room.code)
+    except Exception:
+        pass  # never let a persistence hiccup take the game server down
+
+
+async def _refresh_room_from_db(room: "Room"):
+    """Overwrites `room`'s persisted fields in place with whatever's
+    currently saved (Postgres, in a multi-instance setup) — used right
+    after acquiring a distributed room lock, so this instance mutates the
+    latest state rather than a possibly-stale local copy. Registered with
+    hokm_realtime.set_refresh_hook() at startup; only ever called when
+    Redis is actually enabled. Runtime-only fields (lock, analysis_tasks,
+    voice_participants) are deliberately left untouched — see the note by
+    _ROOM_PERSISTED_FIELDS."""
+    row = DB.load_room(room.id)
+    if not row:
+        return
+    try:
+        fresh = row_to_room(row)
+    except TypeError:
+        return  # a saved shape from an older version of Room — keep what we have
+    for f in _ROOM_PERSISTED_FIELDS:
+        if f == "id":
+            continue
+        setattr(room, f, getattr(fresh, f))
+
+
+def _hydrate_room(room_id: Optional[str]) -> Optional["Room"]:
+    """ROOMS.get(), but falls back to loading the room from the database
+    if this instance has never seen it (e.g. it was created on a
+    different instance and this one is only hearing about it now, via a
+    reconnect or an in-game action). No-op fallback on a single instance
+    or on SQLite — DB.load_room() simply won't find anything this
+    process didn't already save itself."""
+    if not room_id:
+        return None
+    room = ROOMS.get(room_id)
+    if room:
+        return room
+    row = DB.load_room(room_id)
+    if not row:
+        return None
+    try:
+        room = row_to_room(row)
+    except TypeError:
+        return None
+    ROOMS[room.id] = room
+    if room.code:
+        CODE_TO_ROOM[room.code] = room.id
+    return room
+
+
+def _hydrate_room_by_code(code: str) -> Optional["Room"]:
+    """Same idea as _hydrate_room(), but for the "join by code" and
+    "spectate by code" flows: a friend's code might belong to a room this
+    instance never created or loaded before."""
+    room_id = CODE_TO_ROOM.get(code)
+    if room_id:
+        return _hydrate_room(room_id)
+    row = DB.find_room_by_code(code)
+    if not row:
+        return None
+    try:
+        room = row_to_room(row)
+    except TypeError:
+        return None
+    ROOMS[room.id] = room
+    if room.code:
+        CODE_TO_ROOM[room.code] = room.id
+    return room
+
+
+def _get_room(room_id: Optional[str]) -> Optional["Room"]:
+    """Alias kept distinct from _hydrate_room() only for readability at
+    call sites — every in-game action that needs "the room this already-
+    connected player is sitting in" goes through here."""
+    return _hydrate_room(room_id)
+
+
+async def _on_remote_room_update(room_id: str):
+    """Called (only when Redis is enabled) whenever ANOTHER instance
+    reports a change to room_id. If we have no locally-connected sockets
+    for this room at all, there's nothing to do — the next time someone
+    here interacts with it, _get_room()/_hydrate_room() will pull the
+    latest row anyway. If we do, refresh from Postgres and push straight
+    to our own sockets — no re-save, no re-publish, so this can never
+    loop back to the instance that started it."""
+    room = ROOMS.get(room_id)
+    if not room:
+        return
+    await _refresh_room_from_db(room)
+    await broadcast_room(room, lambda seat: state_for(room, seat))
 
 
 def check_season(p: "Player") -> Optional[dict]:
@@ -762,6 +921,8 @@ async def broadcast_room_wait(room: Room):
     """Send every human currently seated in a not-yet-started private room the
     full 4-seat lobby state: who's in each seat (name or None for open),
     and which seat *they* are in / whether they're the host."""
+    save_room_state(room)
+    await RT.publish_room_update(room.id)
     seat_names = {
         s: (PLAYERS[pid].name if pid and pid != "bot" and PLAYERS.get(pid) else None)
         for s, pid in room.seats.items()
@@ -778,6 +939,8 @@ async def broadcast_room_wait(room: Room):
 
 
 async def broadcast_state(room: Room):
+    save_room_state(room)
+    await RT.publish_room_update(room.id)
     await broadcast_room(room, lambda seat: state_for(room, seat))
 
 
@@ -854,7 +1017,7 @@ async def schedule_seat_decision(room: Room, seat: str, kind: str):
 
 async def _bot_or_grace_act(room: Room, seat: str, kind: str, token: int, delay: float):
     await asyncio.sleep(delay)
-    async with room.lock:
+    async with RT.room_lock(room):
         if room.turn_token != token:
             return  # stale — a real move (or reconnect+move) already happened
         if kind == "trump" and not (room.phase == "choosing-trump" and room.turn == seat):
@@ -936,7 +1099,7 @@ async def _do_play_card(room: Room, seat: str, card: dict):
 
 async def _finish_trick_after_delay(room: Room, winner_seat: str, token: int):
     await asyncio.sleep(TRICK_RESOLVE_DELAY)
-    async with room.lock:
+    async with RT.room_lock(room):
         if room.turn_token != token:
             return
         team = G.TEAM[winner_seat]
@@ -1194,7 +1357,7 @@ async def start_game_between(pids: list):
         if pid != "bot":
             PLAYERS[pid].room_id = room.id
             PLAYERS[pid].seat = seat
-    async with room.lock:
+    async with RT.room_lock(room):
         await start_match(room)
 
 
@@ -1303,8 +1466,7 @@ async def handle_message(player_id: str, msg: dict):
 
     if t == "join_room":
         code = (msg.get("code") or "").strip().upper()
-        room_id = CODE_TO_ROOM.get(code)
-        room = ROOMS.get(room_id) if room_id else None
+        room = _hydrate_room_by_code(code)
         open_seat = next((s for s in ["north", "east", "west"] if room and room.seats.get(s) is None), None) if room else None
         if not room or room.phase != "waiting" or not open_seat:
             await send(player_id, {"type": "error", "message": I18N.t("room_code_invalid_or_full", p.language)})
@@ -1313,12 +1475,12 @@ async def handle_message(player_id: str, msg: dict):
         p.room_id, p.seat = room.id, open_seat
         await broadcast_room_wait(room)
         if all(room.seats.get(s) is not None for s in G.SEATS):
-            async with room.lock:
+            async with RT.room_lock(room):
                 await start_match(room)
         return
 
     if t == "start_with_bots":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if not room or room.phase != "waiting" or room.seats.get("south") != player_id:
             return  # only the host, and only before the match has started
         for s in G.SEATS:
@@ -1326,12 +1488,12 @@ async def handle_message(player_id: str, msg: dict):
                 room.seats[s] = "bot"
         if room.code:
             CODE_TO_ROOM.pop(room.code, None)
-        async with room.lock:
+        async with RT.room_lock(room):
             await start_match(room)
         return
 
     if t == "leave_room":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if room:
             await voice_remove(room, player_id)
         if room and room.phase == "waiting":
@@ -1356,18 +1518,18 @@ async def handle_message(player_id: str, msg: dict):
         return
 
     if t == "choose_trump":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if not room or p.seat != room.hakem or room.phase != "choosing-trump":
             return
         suit = msg.get("suit")
         if suit not in G.SUIT_ORDER:
             return
-        async with room.lock:
+        async with RT.room_lock(room):
             await _do_choose_trump(room, p.seat, suit)
         return
 
     if t == "play_card":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if not room or room.turn != p.seat or room.phase != "playing":
             return
         card = msg.get("card") or {}
@@ -1375,7 +1537,7 @@ async def handle_message(player_id: str, msg: dict):
         match = next((c for c in hand if c["suit"] == card.get("suit") and c["rank"] == card.get("rank")), None)
         if not match:
             return
-        async with room.lock:
+        async with RT.room_lock(room):
             if not G.is_legal_play(hand, room.current_trick, match):
                 await send(player_id, {"type": "toast", "message": I18N.t("must_follow_suit", p.language)})
                 return
@@ -1383,18 +1545,18 @@ async def handle_message(player_id: str, msg: dict):
         return
 
     if t == "next_hand":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if not room or room.phase != "hand-end" or p.seat not in room.human_seats():
             return
-        async with room.lock:
+        async with RT.room_lock(room):
             await start_match_or_next_hand(room)
         return
 
     if t == "new_match":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if not room or room.phase != "match-end" or p.seat not in room.human_seats():
             return
-        async with room.lock:
+        async with RT.room_lock(room):
             await start_match(room)
         return
 
@@ -1573,8 +1735,7 @@ async def handle_message(player_id: str, msg: dict):
 
     if t == "spectate_room":
         code = (msg.get("code") or "").strip().upper()
-        room_id = CODE_TO_ROOM.get(code)
-        room = ROOMS.get(room_id) if room_id else None
+        room = _hydrate_room_by_code(code)
         if not room:
             await send(player_id, {"type": "error", "message": I18N.t("room_not_found", p.language)})
             return
@@ -1585,7 +1746,7 @@ async def handle_message(player_id: str, msg: dict):
         return
 
     if t == "leave_spectate":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if room:
             await voice_remove(room, player_id)
             room.spectators.discard(player_id)
@@ -1594,7 +1755,7 @@ async def handle_message(player_id: str, msg: dict):
         return
 
     if t == "chat_message":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if not room:
             return
         if SEC.is_muted(p.mute_until):
@@ -1607,7 +1768,7 @@ async def handle_message(player_id: str, msg: dict):
         return
 
     if t == "quick_chat":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if not room:
             return
         if SEC.is_muted(p.mute_until):
@@ -1620,7 +1781,7 @@ async def handle_message(player_id: str, msg: dict):
         return
 
     if t == "emoji":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if not room:
             return
         if SEC.is_muted(p.mute_until):
@@ -1642,7 +1803,7 @@ async def handle_message(player_id: str, msg: dict):
     # this server again.
 
     if t == "voice_join":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if not room:
             return
         if SEC.is_muted(p.mute_until):
@@ -1667,13 +1828,13 @@ async def handle_message(player_id: str, msg: dict):
         return
 
     if t == "voice_leave":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if room:
             await voice_remove(room, player_id)
         return
 
     if t in ("webrtc_offer", "webrtc_answer", "webrtc_ice"):
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         target_id = msg.get("targetId")
         if not room or not target_id or target_id not in room.voice_participants:
             return
@@ -1829,7 +1990,7 @@ async def handle_message(player_id: str, msg: dict):
         return
 
     if t == "suggest_move":
-        room = ROOMS.get(p.room_id)
+        room = _get_room(p.room_id)
         if not room or room.phase != "playing" or room.turn != p.seat or p.seat not in room.human_seats():
             await send(player_id, {"type": "suggestion", "card": None, "reason": None})
             return
@@ -2130,9 +2291,9 @@ async def ws_endpoint(ws: WebSocket):
             await send(player_id, region_payload(p))
             await send(player_id, world_cup_payload(p))
             await send(player_id, achievements_payload(p))
-            room = ROOMS.get(p.room_id) if p.room_id else None
+            room = _get_room(p.room_id) if p.room_id else None
             if room:
-                async with room.lock:
+                async with RT.room_lock(room):
                     await broadcast_state(room)
             else:
                 await send(player_id, {"type": "screen", "name": "lobby"})
@@ -2239,7 +2400,7 @@ async def ws_endpoint(ws: WebSocket):
             save_player(p)
             if player_id in MM_QUEUE:
                 MM_QUEUE.remove(player_id)
-            room = ROOMS.get(p.room_id) if p.room_id else None
+            room = _get_room(p.room_id) if p.room_id else None
             if room:
                 await voice_remove(room, player_id)
                 if player_id in room.spectators:
@@ -2260,7 +2421,7 @@ async def ws_endpoint(ws: WebSocket):
                                 room.seats[s] = None
                         await broadcast_room_wait(room)
                 else:
-                    async with room.lock:
+                    async with RT.room_lock(room):
                         if p.seat:
                             await maybe_cover_pending_decision(room, p.seat)
                         await broadcast_state(room)

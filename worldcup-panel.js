@@ -24,7 +24,7 @@
 
   const CSS = `
   .hkw-fab {
-    position: fixed; bottom: 176px; inset-inline-end: 18px; z-index: 9998;
+    position: fixed; bottom: calc(176px + env(safe-area-inset-bottom)); inset-inline-end: calc(18px + env(safe-area-inset-right)); z-index: 9998;
     display: flex; align-items: center; gap: 8px;
     background: linear-gradient(135deg, #241a10, #402c14);
     border: 1px solid #e6b455; border-radius: 999px;
@@ -32,7 +32,14 @@
     font-family: inherit; color: #ffe9c2; user-select: none;
     transition: transform .15s ease;
   }
-  .hkw-fab:hover { transform: translateY(-2px); }
+  @media (hover:hover) and (pointer:fine){ .hkw-fab:hover { transform: translateY(-2px); } }
+  @media (max-width:640px){
+    .hkw-fab{
+      bottom: calc(256px + env(safe-area-inset-bottom));
+      inset-inline-end: calc(10px + env(safe-area-inset-right));
+      padding:6px 10px; gap:6px; font-size:12px;
+    }
+  }
 
   .hkw-overlay {
     position: fixed; inset: 0; background: rgba(6,10,12,.72);
@@ -49,7 +56,7 @@
   }
   .hkw-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #3a2a16; background: linear-gradient(135deg, #241a10, #1a130c); }
   .hkw-head h2 { margin: 0; font-size: 16px; }
-  .hkw-close { cursor: pointer; font-size: 20px; line-height: 1; color: #d8b98a; background: none; border: none; }
+  .hkw-close { cursor: pointer; font-size: 20px; line-height: 1; color: #d8b98a; background: none; border: none; width:44px; height:44px; display:flex; align-items:center; justify-content:center; margin:-10px; }
   .hkw-tabs { display: flex; border-bottom: 1px solid #3a2a16; }
   .hkw-tab { flex: 1; text-align: center; padding: 10px 4px; cursor: pointer; font-size: 13px; color: #a3855f; border-bottom: 2px solid transparent; background: none; border-top: none; border-inline: none; font-family: inherit; }
   .hkw-tab.hkw-active { color: #e6b455; border-bottom-color: #e6b455; }

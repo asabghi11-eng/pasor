@@ -28,7 +28,7 @@
 
   const CSS = `
   .hks-fab {
-    position: fixed; bottom: 18px; inset-inline-start: 18px; z-index: 9998;
+    position: fixed; bottom: calc(18px + env(safe-area-inset-bottom)); inset-inline-start: calc(18px + env(safe-area-inset-left)); z-index: 9998;
     display: flex; align-items: center; gap: 8px;
     background: linear-gradient(135deg, #0f1a24, #12273a);
     border: 1px solid #4d9dca; border-radius: 999px;
@@ -36,7 +36,14 @@
     font-family: inherit; color: #d9f0ff; user-select: none;
     transition: transform .15s ease;
   }
-  .hks-fab:hover { transform: translateY(-2px); }
+  @media (hover:hover) and (pointer:fine){ .hks-fab:hover { transform: translateY(-2px); } }
+  @media (max-width:640px){
+    .hks-fab{
+      bottom: calc(88px + env(safe-area-inset-bottom));
+      inset-inline-start: calc(10px + env(safe-area-inset-left));
+      padding:6px 10px; gap:6px; font-size:12px;
+    }
+  }
   .hks-badge {
     background: #e2574c; color: #fff; font-weight: 700; font-size: 11px;
     border-radius: 999px; padding: 1px 7px; display: none;
@@ -62,7 +69,7 @@
     background: linear-gradient(135deg, #12222f, #0e161d);
   }
   .hks-head h2 { margin: 0; font-size: 16px; }
-  .hks-close { cursor: pointer; font-size: 20px; line-height: 1; color: #b7d4e6; background: none; border: none; }
+  .hks-close { cursor: pointer; font-size: 20px; line-height: 1; color: #b7d4e6; background: none; border: none; width:44px; height:44px; display:flex; align-items:center; justify-content:center; margin:-10px; }
   .hks-tabs { display: flex; border-bottom: 1px solid #1c2e3d; flex-wrap: wrap; }
   .hks-tab { flex: 1; text-align: center; padding: 9px 4px; cursor: pointer; font-size: 13px; color: #8ba9bd; border-bottom: 2px solid transparent; min-width: 70px; }
   .hks-tab.hks-active { color: #4d9dca; border-bottom-color: #4d9dca; }
@@ -76,7 +83,7 @@
   .hks-report-btn { cursor: pointer; margin-right: 6px; opacity: .5; font-size: 12px; }
   .hks-report-btn:hover { opacity: 1; }
   .hks-chat-row { display: flex; gap: 6px; }
-  .hks-chat-row input { flex: 1; border-radius: 8px; border: 1px solid #1c2e3d; background: #0a1015; color: #d9f0ff; padding: 8px; font-family: inherit; }
+  .hks-chat-row input { flex: 1; border-radius: 8px; border: 1px solid #1c2e3d; background: #0a1015; color: #d9f0ff; padding: 8px; font-family: inherit; font-size: 16px; }
   .hks-chat-row button { border: none; border-radius: 8px; background: #4d9dca; color: #06232f; font-weight: 700; padding: 8px 12px; cursor: pointer; }
   .hks-quick-row, .hks-emoji-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
   .hks-quick-row span, .hks-emoji-row span {
@@ -91,7 +98,7 @@
   .hks-row-actions button { border: none; border-radius: 8px; background: #1c2e3d; color: #d9f0ff; padding: 5px 10px; font-size: 12px; cursor: pointer; }
 
   .hks-field { display: flex; gap: 6px; margin-bottom: 10px; }
-  .hks-field input { flex: 1; border-radius: 8px; border: 1px solid #1c2e3d; background: #0a1015; color: #d9f0ff; padding: 8px; font-family: inherit; }
+  .hks-field input { flex: 1; border-radius: 8px; border: 1px solid #1c2e3d; background: #0a1015; color: #d9f0ff; padding: 8px; font-family: inherit; font-size: 16px; }
   .hks-field button { border: none; border-radius: 8px; background: #4d9dca; color: #06232f; font-weight: 700; padding: 8px 12px; cursor: pointer; }
   .hks-clan-card { background: #12222f; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
   .hks-clan-card .hks-code { font-family: monospace; letter-spacing: 2px; color: #ffd76a; }

@@ -33,7 +33,7 @@
 
   const CSS = `
   .hke-fab {
-    position: fixed; bottom: 18px; inset-inline-end: 18px; z-index: 9998;
+    position: fixed; bottom: calc(18px + env(safe-area-inset-bottom)); inset-inline-end: calc(18px + env(safe-area-inset-right)); z-index: 9998;
     display: flex; align-items: center; gap: 10px;
     background: linear-gradient(135deg, #241a0f, #3a2712);
     border: 1px solid #caa14d; border-radius: 999px;
@@ -41,7 +41,17 @@
     font-family: inherit; color: #f3e3c0; user-select: none;
     transition: transform .15s ease;
   }
-  .hke-fab:hover { transform: translateY(-2px); }
+  @media (hover:hover) and (pointer:fine){ .hke-fab:hover { transform: translateY(-2px); } }
+  @media (max-width:640px){
+    .hke-fab{
+      /* the on-screen hand of cards can reach ~78px + margin tall — sit above it, not on top of it */
+      bottom: calc(88px + env(safe-area-inset-bottom));
+      inset-inline-end: calc(10px + env(safe-area-inset-right));
+      padding:6px 10px; gap:6px; font-size:12px;
+    }
+    .hke-fab .hke-lvl{font-size:10.5px;padding:1px 6px;}
+    .hke-fab .hke-chip{font-size:12px;}
+  }
   .hke-fab .hke-lvl {
     background: #caa14d; color: #241a0f; font-weight: 700; font-size: 12px;
     border-radius: 999px; padding: 2px 8px;
@@ -67,7 +77,7 @@
     background: linear-gradient(135deg, #2a1d10, #1b140b);
   }
   .hke-head h2 { margin: 0; font-size: 16px; }
-  .hke-close { cursor: pointer; font-size: 20px; line-height: 1; color: #d8c39a; background: none; border: none; }
+  .hke-close { cursor: pointer; font-size: 20px; line-height: 1; color: #d8c39a; background: none; border: none; width:44px; height:44px; display:flex; align-items:center; justify-content:center; margin:-10px; }
   .hke-wallet-row { display: flex; gap: 14px; padding: 12px 16px; font-size: 14px; }
   .hke-wallet-row b { color: #ffd76a; }
   .hke-xpbar-wrap { padding: 0 16px 12px; }
