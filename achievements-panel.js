@@ -250,7 +250,7 @@
       card.innerHTML = `
         <div class="hka-icon">${a.icon || "🏅"}</div>
         <div class="hka-info">
-          <div class="hka-name">${a.nameFa}</div>
+          <div class="hka-name">${t('ach_name_' + a.id, a.nameFa)}</div>
           <div class="hka-bar-wrap"><div class="hka-bar" style="width:${pct}%"></div></div>
           <div class="hka-progtext">${a.progress} / ${a.target}</div>
           ${rewardBits.length ? `<div class="hka-reward">${rewardBits.join(" · ")}</div>` : ""}

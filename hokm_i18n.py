@@ -1175,6 +1175,88 @@ _STRINGS = {
         "fa": 'قفل', "en": 'Locked', "ar": 'مقفل', "tr": 'Kilitli', "ru": 'Заблокировано',
     },
 
+    # ---- achievement names (achievements-panel.js reads ach_name_<id>,
+    # falling back to nameFa from hokm_achievements.py if a key/catalog
+    # isn't loaded yet — same pattern as every other t() call) ----
+    "ach_name_win_1": {
+        "fa": 'اولین قدم', "en": 'First Win', "ar": 'أول فوز', "tr": 'İlk Galibiyet', "ru": 'Первая победа',
+    },
+    "ach_name_win_10": {
+        "fa": 'بازیکن جدی', "en": 'Getting Serious', "ar": 'بدأ الجدّ', "tr": 'İşler Ciddileşiyor', "ru": 'Настрой серьёзный',
+    },
+    "ach_name_win_50": {
+        "fa": 'حکم\u200cباز باتجربه', "en": 'Seasoned Player', "ar": 'لاعب محنّك', "tr": 'Deneyimli Oyuncu', "ru": 'Опытный игрок',
+    },
+    "ach_name_win_200": {
+        "fa": 'افسانه\u200cی میز', "en": 'Table Legend', "ar": 'أسطورة الطاولة', "tr": 'Masanın Efsanesi', "ru": 'Легенда стола',
+    },
+    "ach_name_tricks_100": {
+        "fa": 'دست گرم', "en": 'Warmed Up', "ar": 'تسخين', "tr": 'Isındı', "ru": 'Разогрев',
+    },
+    "ach_name_tricks_1000": {
+        "fa": 'استاد خشت\u200cگیری', "en": 'Trick Master', "ar": 'سيد الخدع', "tr": 'El Ustası', "ru": 'Мастер взяток',
+    },
+    "ach_name_tricks_5000": {
+        "fa": 'ماشین خشت\u200cگیری', "en": 'Trick Machine', "ar": 'آلة الخدع', "tr": 'El Makinesi', "ru": 'Машина взяток',
+    },
+    "ach_name_sur_1": {
+        "fa": 'اولین سور', "en": 'First Sweep', "ar": 'أول كسحة', "tr": 'İlk Sur', "ru": 'Первый сур',
+    },
+    "ach_name_sur_10": {
+        "fa": 'سوربازِ حرفه\u200cای', "en": 'Sweep Specialist', "ar": 'خبير الكسحات', "tr": 'Sur Uzmanı', "ru": 'Специалист по суру',
+    },
+    "ach_name_sur_50": {
+        "fa": 'کابوس حریفان', "en": "Opponents' Nightmare", "ar": 'كابوس الخصوم', "tr": 'Rakiplerin Kâbusu', "ru": 'Кошмар соперников',
+    },
+    "ach_name_hakem_10": {
+        "fa": 'حاکم منتخب', "en": 'Elected Hakem', "ar": 'الحاكم المنتخب', "tr": 'Seçilmiş Hakem', "ru": 'Избранный хаким',
+    },
+    "ach_name_hakem_50": {
+        "fa": 'حاکم بلامنازع', "en": 'Undisputed Hakem', "ar": 'الحاكم بلا منازع', "tr": 'Tartışmasız Hakem', "ru": 'Бесспорный хаким',
+    },
+    "ach_name_streak_3": {
+        "fa": 'شروع طوفانی', "en": 'On a Roll', "ar": 'بداية عاصفة', "tr": 'Fırtınalı Başlangıç', "ru": 'Мощный старт',
+    },
+    "ach_name_streak_10": {
+        "fa": 'شکست\u200cناپذیر', "en": 'Unstoppable', "ar": 'لا يُقهر', "tr": 'Durdurulamaz', "ru": 'Неудержимый',
+    },
+    "ach_name_level_10": {
+        "fa": 'لول ۱۰', "en": 'Level 10', "ar": 'المستوى ١٠', "tr": 'Seviye 10', "ru": 'Уровень 10',
+    },
+    "ach_name_level_25": {
+        "fa": 'لول ۲۵', "en": 'Level 25', "ar": 'المستوى ٢٥', "tr": 'Seviye 25', "ru": 'Уровень 25',
+    },
+    "ach_name_rank_silver": {
+        "fa": 'رسیدن به نقره\u200cای', "en": 'Reached Silver', "ar": 'الوصول إلى الفضي', "tr": 'Gümüşe Ulaşıldı', "ru": 'Достигнут серебряный ранг',
+    },
+    "ach_name_rank_diamond": {
+        "fa": 'رسیدن به الماس', "en": 'Reached Diamond', "ar": 'الوصول إلى الماسي', "tr": 'Elmasa Ulaşıldı', "ru": 'Достигнут алмазный ранг',
+    },
+    "ach_name_rank_legend": {
+        "fa": 'رسیدن به افسانه', "en": 'Reached Legend', "ar": 'الوصول إلى الأسطوري', "tr": 'Efsaneye Ulaşıldı', "ru": 'Достигнут ранг легенды',
+    },
+    "ach_name_friends_5": {
+        "fa": 'دوست\u200cیاب', "en": 'Friend Finder', "ar": 'باحث عن الأصدقاء', "tr": 'Arkadaş Bulucu', "ru": 'Искатель друзей',
+    },
+    "ach_name_friends_20": {
+        "fa": 'محبوب جمع', "en": 'Popular', "ar": 'محبوب', "tr": 'Popüler', "ru": 'Популярный',
+    },
+    "ach_name_clan_member": {
+        "fa": 'عضو کلن', "en": 'Clan Member', "ar": 'عضو في العشيرة', "tr": 'Klan Üyesi', "ru": 'Член клана',
+    },
+    "ach_name_worldcup_1": {
+        "fa": 'قهرمان جام جهانی', "en": 'World Cup Champion', "ar": 'بطل كأس العالم', "tr": 'Dünya Kupası Şampiyonu', "ru": 'Чемпион мира',
+    },
+    "ach_name_worldcup_3": {
+        "fa": 'سلسله قهرمانی', "en": 'Dynasty', "ar": 'سلالة الأبطال', "tr": 'Hanedan', "ru": 'Династия',
+    },
+    "ach_name_collector_5": {
+        "fa": 'کلکسیونر تازه\u200cکار', "en": 'Budding Collector', "ar": 'جامع مبتدئ', "tr": 'Acemi Koleksiyoncu', "ru": 'Начинающий коллекционер',
+    },
+    "ach_name_collector_15": {
+        "fa": 'کلکسیونر حرفه\u200cای', "en": 'Serious Collector', "ar": 'جامع محترف', "tr": 'Profesyonel Koleksiyoncu', "ru": 'Опытный коллекционер',
+    },
+
     # ---- voice-panel.js (Phase 14) ----
     "voi_chat_muted": {
         "fa": 'چت صوتی تو موقتاً محدود شده', "en": 'Your voice chat is temporarily restricted', "ar": 'تم تقييد الدردشة الصوتية الخاصة بك مؤقتاً', "tr": 'Sesli sohbetin geçici olarak kısıtlandı', "ru": 'Ваш голосовой чат временно ограничен',
